@@ -1,0 +1,25 @@
+//иконки соц-сетей
+.social-icons {
+  padding: 10px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 20px;
+  color: color(white);
+
+  &__link {
+    display: flex;
+    text-decoration: unset;
+    color: inherit;
+
+    &:hover {
+      color: red;
+      transform: scale(1.1);
+    }
+
+    &::before {
+      font-size: 2rem;
+    }
+  }
+}
