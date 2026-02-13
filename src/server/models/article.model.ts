@@ -30,8 +30,8 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
   async function create(title: string, content: string, userId: number, imageUrl: string | null) {
     const query = {
       text: `
-        INSERT INTO articles(title, content, author_id, image_url, created_at)
-        VALUES($1, $2, $3, $4, CURRENT_TIMESTAMP)
+        INSERT INTO articles(title, content, author_id, image_url, is_published, created_at)
+        VALUES($1, $2, $3, $4, true, CURRENT_TIMESTAMP)
         RETURNING *
       `,
       values: [title, content, userId, imageUrl],
@@ -99,6 +99,30 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
     return Number.parseInt(result.rows[0].total, 10);
   }
 
+  async function getAllAdmin(page = 1, perPage = 6): Promise<ArticleRecord[]> {
+    const offset = (page - 1) * perPage;
+    const query = {
+      text: `
+        SELECT a.*, u.username as author_name
+        FROM articles a
+        JOIN users u ON a.author_id = u.id
+        ORDER BY a.created_at DESC
+        LIMIT $1 OFFSET $2
+      `,
+      values: [perPage, offset],
+    };
+    const result = await pool.query<ArticleRecord>(query);
+    return result.rows;
+  }
+
+  async function getCountAdmin(): Promise<number> {
+    const query = {
+      text: 'SELECT COUNT(*) as total FROM articles',
+    };
+    const result = await pool.query<{ total: string }>(query);
+    return Number.parseInt(result.rows[0].total, 10);
+  }
+
   async function update(
     id: number,
     userId: number,
@@ -132,9 +156,11 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
   return {
     create,
     getAll,
+    getAllAdmin,
     getById,
     getIndexById,
     getCount,
+    getCountAdmin,
     update,
     remove,
   };

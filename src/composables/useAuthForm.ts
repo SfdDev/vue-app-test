@@ -1,28 +1,12 @@
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
-import { useRouter } from '#imports';
+import { useRouter, useRuntimeConfig } from '#imports';
 import { useAuthStore } from '@/store/auth';
-
-export {};
-
-declare global {
-  interface Window {
-    // минимальное описание объекта reCAPTCHA, синхронизировано по типу с предыдущей декларацией
-    grecaptcha: {
-      ready(cb: () => void): void;
-      render(
-        container: string | HTMLElement,
-        parameters: { sitekey: string; theme?: string },
-      ): number;
-      reset(widgetId?: number): void;
-      getResponse(widgetId?: number): string;
-    };
-  }
-}
 
 export function useAuthForm() {
   const authStore = useAuthStore();
   const router = useRouter();
+  const config = useRuntimeConfig();
 
   const isLogin = ref(true);
   const username = ref('');
@@ -30,7 +14,7 @@ export function useAuthForm() {
   const error = ref<string | null>(null);
   const success = ref<string | null>(null);
   const coincidence = ref<string | null>(null);
-  const recaptchaSiteKey = process.env.NUXT_PUBLIC_RECAPTCHA_SITE_KEY || '';
+  const recaptchaSiteKey = config.public.recaptchaSiteKey || '';
   const recaptchaLoaded = ref(false);
   const recaptchaWidgetId = ref<number | null>(null);
   const usernameErrors = ref<string[]>([]);

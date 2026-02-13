@@ -7,6 +7,7 @@ import { parentPort, threadId } from 'node:worker_threads';
 import { escapeHtml } from 'file:///home/dimas/projects/vue-app-test/node_modules/@vue/shared/dist/shared.cjs.js';
 import { promises } from 'node:fs';
 import jwt from 'file:///home/dimas/projects/vue-app-test/node_modules/jsonwebtoken/index.js';
+import axios from 'file:///home/dimas/projects/vue-app-test/node_modules/axios/index.js';
 import bcrypt from 'file:///home/dimas/projects/vue-app-test/node_modules/bcrypt/bcrypt.js';
 import pg from 'file:///home/dimas/projects/vue-app-test/node_modules/pg/esm/index.mjs';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///home/dimas/projects/vue-app-test/node_modules/vue-bundle-renderer/dist/runtime.mjs';
@@ -2592,6 +2593,7 @@ async function getIslandContext(event) {
 	return ctx;
 }
 
+const _lazy_VbFIBW = () => Promise.resolve().then(function () { return index_get$3; });
 const _lazy_KmQ6kL = () => Promise.resolve().then(function () { return _id__delete$1; });
 const _lazy_ZE2R1H = () => Promise.resolve().then(function () { return _id__get$3; });
 const _lazy_t8hjkY = () => Promise.resolve().then(function () { return _id__put$1; });
@@ -2600,10 +2602,12 @@ const _lazy_yc3AZu = () => Promise.resolve().then(function () { return index_pos
 const _lazy_0kVEIV = () => Promise.resolve().then(function () { return _id__get$1; });
 const _lazy_ryAgB_ = () => Promise.resolve().then(function () { return checkUsername_post$1; });
 const _lazy_My3T0c = () => Promise.resolve().then(function () { return login_post$1; });
+const _lazy_nkMsD6 = () => Promise.resolve().then(function () { return register_post$1; });
 const _lazy_o6zpM_ = () => Promise.resolve().then(function () { return renderer$1; });
 
 const handlers = [
   { route: '', handler: _ke79ZA, lazy: false, middleware: true, method: undefined },
+  { route: '/api/admin/articles', handler: _lazy_VbFIBW, lazy: true, middleware: false, method: "get" },
   { route: '/api/articles/:id', handler: _lazy_KmQ6kL, lazy: true, middleware: false, method: "delete" },
   { route: '/api/articles/:id', handler: _lazy_ZE2R1H, lazy: true, middleware: false, method: "get" },
   { route: '/api/articles/:id', handler: _lazy_t8hjkY, lazy: true, middleware: false, method: "put" },
@@ -2612,6 +2616,7 @@ const handlers = [
   { route: '/api/articles/page-of/:id', handler: _lazy_0kVEIV, lazy: true, middleware: false, method: "get" },
   { route: '/api/auth/check-username', handler: _lazy_ryAgB_, lazy: true, middleware: false, method: "post" },
   { route: '/api/auth/login', handler: _lazy_My3T0c, lazy: true, middleware: false, method: "post" },
+  { route: '/api/auth/register', handler: _lazy_nkMsD6, lazy: true, middleware: false, method: "post" },
   { route: '/__nuxt_error', handler: _lazy_o6zpM_, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: _SxA8c9, lazy: false, middleware: false, method: undefined },
   { route: '/**', handler: _lazy_o6zpM_, lazy: true, middleware: false, method: undefined }
@@ -2974,8 +2979,8 @@ function createArticleModel({ pool }) {
   async function create(title, content, userId, imageUrl) {
     const query = {
       text: `
-        INSERT INTO articles(title, content, author_id, image_url, created_at)
-        VALUES($1, $2, $3, $4, CURRENT_TIMESTAMP)
+        INSERT INTO articles(title, content, author_id, image_url, is_published, created_at)
+        VALUES($1, $2, $3, $4, true, CURRENT_TIMESTAMP)
         RETURNING *
       `,
       values: [title, content, userId, imageUrl]
@@ -3038,6 +3043,28 @@ function createArticleModel({ pool }) {
     const result = await pool.query(query);
     return Number.parseInt(result.rows[0].total, 10);
   }
+  async function getAllAdmin(page = 1, perPage = 6) {
+    const offset = (page - 1) * perPage;
+    const query = {
+      text: `
+        SELECT a.*, u.username as author_name
+        FROM articles a
+        JOIN users u ON a.author_id = u.id
+        ORDER BY a.created_at DESC
+        LIMIT $1 OFFSET $2
+      `,
+      values: [perPage, offset]
+    };
+    const result = await pool.query(query);
+    return result.rows;
+  }
+  async function getCountAdmin() {
+    const query = {
+      text: "SELECT COUNT(*) as total FROM articles"
+    };
+    const result = await pool.query(query);
+    return Number.parseInt(result.rows[0].total, 10);
+  }
   async function update(id, userId, updateData) {
     var _a, _b, _c, _d;
     const query = {
@@ -3067,9 +3094,11 @@ function createArticleModel({ pool }) {
   return {
     create,
     getAll,
+    getAllAdmin,
     getById,
     getIndexById,
     getCount,
+    getCountAdmin,
     update,
     remove
   };
@@ -3080,6 +3109,20 @@ const articleModel = createArticleModel({ pool: pool$1 });
 async function getArticles(page, perPage) {
   const articles = await articleModel.getAll(page, perPage);
   const total = await articleModel.getCount();
+  const totalPages = Math.ceil(total / perPage);
+  return {
+    data: articles,
+    meta: {
+      current_page: page,
+      per_page: perPage,
+      total_pages: totalPages,
+      total
+    }
+  };
+}
+async function getAdminArticles(page, perPage) {
+  const articles = await articleModel.getAllAdmin(page, perPage);
+  const total = await articleModel.getCountAdmin();
   const totalPages = Math.ceil(total / perPage);
   return {
     data: articles,
@@ -3182,6 +3225,27 @@ function requireAdmin(event) {
   }
   return user;
 }
+
+const index_get$2 = defineEventHandler(async (event) => {
+  var _a, _b, _c;
+  requireAdmin(event);
+  const query = getQuery$1(event);
+  const page = Number.parseInt((_a = query.page) != null ? _a : "1", 10) || 1;
+  const perPage = Number.parseInt((_b = query.per_page) != null ? _b : "4", 10) || 4;
+  try {
+    return await getAdminArticles(page, perPage);
+  } catch (error) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: (_c = error.message) != null ? _c : "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0441\u0442\u0430\u0442\u0435\u0439"
+    });
+  }
+});
+
+const index_get$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: index_get$2
+}, Symbol.toStringTag, { value: 'Module' }));
 
 const _id__delete = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
@@ -3428,7 +3492,37 @@ function createUserModel({ pool }) {
 const pool = getDbPool();
 const userModel = createUserModel({ pool });
 const JWT_SECRET = process.env.JWT_SECRET;
-process.env.RECAPTCHA_SECRET_KEY;
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
+async function verifyRecaptcha(recaptcha) {
+  try {
+    const response = await axios.post("https://www.google.com/recaptcha/api/siteverify", null, {
+      params: {
+        secret: RECAPTCHA_SECRET,
+        response: recaptcha
+      }
+    });
+    return response.data.success;
+  } catch {
+    return false;
+  }
+}
+async function registerUser(username, password, recaptcha) {
+  const isRecaptchaValid = await verifyRecaptcha(recaptcha);
+  if (!isRecaptchaValid) {
+    throw new Error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0438 reCAPTCHA");
+  }
+  const existingUser = await userModel.findByUsername(username);
+  if (existingUser) {
+    throw new Error("\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442");
+  }
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await userModel.create(username, passwordHash);
+  return {
+    id: user.id,
+    username: user.username,
+    is_admin: user.is_admin
+  };
+}
 async function loginUser(username, password) {
   const user = await userModel.findByUsername(username);
   if (!user || !user.password_hash) {
@@ -3492,6 +3586,25 @@ const login_post = defineEventHandler(async (event) => {
 const login_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: login_post
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const register_post = defineEventHandler(async (event) => {
+  var _a;
+  const body = await readBody(event);
+  try {
+    const user = await registerUser(body.username, body.password, body.recaptcha);
+    return user;
+  } catch (error) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: (_a = error.message) != null ? _a : "\u041E\u0448\u0438\u0431\u043A\u0430 \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u0438"
+    });
+  }
+});
+
+const register_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: register_post
 }, Symbol.toStringTag, { value: 'Module' }));
 
 function renderPayloadResponse(ssrContext) {

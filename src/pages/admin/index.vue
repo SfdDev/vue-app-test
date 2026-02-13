@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from '#imports';
+import { useRoute, useRouter } from '#imports';
 import { useArticlesStore } from '@/store/articles';
+import { useAuthStore } from '@/store/auth';
 import { formatDate, getFullImageUrl } from '@/utils/common';
 import Pagination from '@/components/UI/pagination.vue';
 
@@ -10,7 +11,9 @@ definePageMeta({
 });
 
 const route = useRoute();
+const router = useRouter();
 const articlesStore = useArticlesStore();
+const authStore = useAuthStore();
 const dialogOpen = ref(false);
 const isEditing = ref(false);
 const currentArticle = ref<{
@@ -97,13 +100,13 @@ async function saveArticle() {
     if (isEditing.value && articleData.id != null) {
       payload.id = articleData.id;
       await articlesStore.editArticle(payload);
-      await articlesStore.loadArticles(
+      await articlesStore.loadAdminArticles(
         articlesStore.pagination.currentPage,
         articlesStore.pagination.articlesPerPage,
       );
     } else {
       await articlesStore.addArticle(payload);
-      await articlesStore.loadArticles(1, articlesStore.pagination.articlesPerPage || 6);
+      await articlesStore.loadAdminArticles(1, articlesStore.pagination.articlesPerPage || 4);
     }
 
     resetForm();
@@ -117,6 +120,11 @@ async function saveArticle() {
 async function deleteArticle(id: number) {
   try {
     await articlesStore.deleteArticle(id);
+    // Перезагружаем админские статьи после удаления
+    await articlesStore.loadAdminArticles(
+      articlesStore.pagination.currentPage,
+      articlesStore.pagination.articlesPerPage,
+    );
   } catch (error: any) {
     // eslint-disable-next-line no-alert
     alert(`Ошибка при удалении статьи: ${error.message}`);
@@ -133,12 +141,27 @@ function clearAllCache() {
 async function changePage(page: number) {
   const pageNum = Number.parseInt(String(page), 10) || 1;
   if (pageNum < 1 || pageNum > articlesStore.pagination.totalPages) return;
-  await articlesStore.loadArticles(pageNum, articlesStore.pagination.articlesPerPage);
+  await articlesStore.loadAdminArticles(pageNum, articlesStore.pagination.articlesPerPage);
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Проверка прав администратора
+  if (!authStore.user || !(authStore.user as any)?.is_admin) {
+    router.push('/');
+    return;
+  }
+
+  // Проверка авторизации при загрузке страницы
+  await authStore.checkAuth();
+  
+  // Повторная проверка после checkAuth
+  if (!authStore.user || !(authStore.user as any)?.is_admin) {
+    router.push('/');
+    return;
+  }
+
   const page = Number.parseInt((route.query.page as string) || '1', 10) || 1;
-  articlesStore.loadArticles(page, 4);
+  articlesStore.loadAdminArticles(page, 4);
 });
 </script>
 
@@ -180,7 +203,13 @@ onMounted(() => {
                     {{ article.content }}...
                   </p>
                   <p class="mb-1">
-                    Опубликовано: {{ formatDate(article.created_at) }}
+                    Создано: {{ formatDate(article.created_at) }}
+                  </p>
+                  <p class="mb-1">
+                    Статус: 
+                    <span :class="article.is_published ? 'text-success' : 'text-warning'">
+                      {{ article.is_published ? 'Опубликовано' : 'Не опубликовано' }}
+                    </span>
                   </p>
                   <p class="mb-3">
                     Автор: {{ article.author_name }}

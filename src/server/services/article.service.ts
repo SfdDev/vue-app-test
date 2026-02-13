@@ -22,6 +22,22 @@ export async function getArticles(page: number, perPage: number) {
   };
 }
 
+export async function getAdminArticles(page: number, perPage: number) {
+  const articles = await articleModel.getAllAdmin(page, perPage);
+  const total = await articleModel.getCountAdmin();
+  const totalPages = Math.ceil(total / perPage);
+
+  return {
+    data: articles,
+    meta: {
+      current_page: page,
+      per_page: perPage,
+      total_pages: totalPages,
+      total,
+    },
+  };
+}
+
 export async function getArticleById(id: number) {
   const article = await articleModel.getById(id);
   if (!article) {

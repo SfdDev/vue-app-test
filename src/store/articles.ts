@@ -140,6 +140,52 @@ export const useArticlesStore = defineStore(
       }
     };
 
+    const loadAdminArticles = async (page: number = 1, perPage: number = 4): Promise<Article[]> => {
+      const cacheKey = `${perPage}_${page}`;
+
+      loading.value = true;
+      error.value = null;
+
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+        const response = await axios.get<ArticlesResponse>(`/api/admin/articles`, {
+          params: { page, per_page: perPage },
+          headers: { 
+            Authorization: token ? `Bearer ${token}` : '',
+          },
+        });
+
+        if (!response.data || !response.data.data) {
+          throw new Error('Некорректный формат ответа');
+        }
+
+        articles.value = [...response.data.data];
+        pagination.value = {
+          currentPage: response.data.meta.current_page || 1,
+          totalPages: response.data.meta.total_pages || 1,
+          totalArticles: response.data.meta.total || 0,
+          articlesPerPage: response.data.meta.per_page || perPage,
+        };
+
+        // Сохраняем в кэш (используем тот же формат ключа)
+        pages.value[cacheKey] = {
+          data: response.data,
+          meta: response.data.meta,
+        };
+
+        return articles.value;
+      } catch (err) {
+        const errorObj = err as AxiosError | Error;
+        error.value = 'Ошибка загрузки статей: ' + (axios.isAxiosError(errorObj) 
+          ? errorObj.response?.data?.message || errorObj.message 
+          : errorObj.message);
+        console.error('Ошибка загрузки статей админки:', err);
+        return [];
+      } finally {
+        loading.value = false;
+      }
+    };
+
     const loadArticleById = async (id: string | number): Promise<void> => {
       loading.value = true;
       error.value = null;
@@ -388,6 +434,7 @@ export const useArticlesStore = defineStore(
       setOriginPage,
       clearAllCache,
       loadArticles,
+      loadAdminArticles,
       loadArticleById,
       clearPageCache,
       addArticle,
