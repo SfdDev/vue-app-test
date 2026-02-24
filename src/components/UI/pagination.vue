@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick } from 'vue';
+import { useRouter, useRoute } from '#imports';
 
 const props = defineProps<{
   modelValue: number;
@@ -9,6 +10,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: number): void;
 }>();
+
+const router = useRouter();
+const route = useRoute();
 
 const pages = computed(() => {
   const total = props.totalPages;
@@ -24,6 +28,20 @@ const pages = computed(() => {
 
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 });
+
+const handlePageChange = (page: number) => {
+  emit('update:modelValue', page);
+  
+  // Обновляем URL после обновления данных
+  nextTick(() => {
+    const currentPath = route.path;
+    if (page === 1) {
+      router.push(currentPath);
+    } else {
+      router.push({ path: currentPath, query: { page: page.toString() } });
+    }
+  });
+};
 </script>
 
 <template>
@@ -32,7 +50,7 @@ const pages = computed(() => {
       class="btn pagination__arrow"
       type="button"
       :disabled="modelValue === 1"
-      @click="emit('update:modelValue', 1)"
+      @click="handlePageChange(1)"
     >
       ←
     </button>
@@ -43,7 +61,7 @@ const pages = computed(() => {
       class="btn pagination__page"
       :class="{ 'pagination__page--active': page === modelValue }"
       type="button"
-      @click="emit('update:modelValue', page)"
+      @click="handlePageChange(page)"
     >
       {{ page }}
     </button>
@@ -52,7 +70,7 @@ const pages = computed(() => {
       class="btn pagination__arrow"
       type="button"
       :disabled="modelValue === totalPages"
-      @click="emit('update:modelValue', totalPages)"
+      @click="handlePageChange(totalPages)"
     >
       →
     </button>

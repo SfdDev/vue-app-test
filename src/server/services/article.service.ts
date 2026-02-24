@@ -6,8 +6,8 @@ import { createArticleModel } from '../models/article.model';
 const pool = getDbPool();
 const articleModel = createArticleModel({ pool });
 
-export async function getArticles(page: number, perPage: number) {
-  const articles = await articleModel.getAll(page, perPage);
+export async function getArticles(page: number, perPage: number, categoryId?: number | null) {
+  const articles = await articleModel.getAll(page, perPage, categoryId);
   const total = await articleModel.getCount();
   const totalPages = Math.ceil(total / perPage);
 
@@ -22,8 +22,8 @@ export async function getArticles(page: number, perPage: number) {
   };
 }
 
-export async function getAdminArticles(page: number, perPage: number) {
-  const articles = await articleModel.getAllAdmin(page, perPage);
+export async function getAdminArticles(page: number, perPage: number, categoryId?: number | null) {
+  const articles = await articleModel.getAllAdmin(page, perPage, categoryId);
   const total = await articleModel.getCountAdmin();
   const totalPages = Math.ceil(total / perPage);
 
@@ -46,6 +46,14 @@ export async function getArticleById(id: number) {
   return article;
 }
 
+export async function getArticleByIdAdmin(id: number) {
+  const article = await articleModel.getByIdAdmin(id);
+  if (!article) {
+    throw Object.assign(new Error('Article not found'), { statusCode: 404 });
+  }
+  return article;
+}
+
 export async function getPageOfArticle(id: number, perPage: number) {
   const index = await articleModel.getIndexById(id);
   const page = Math.floor(index / perPage) + 1;
@@ -57,6 +65,8 @@ export async function createArticle(
   content: string,
   userId: number,
   imageUrl: string | null,
+  isPublished: boolean = true,
+  categoryId: number | null = null
 ) {
   if (!title || !content) {
     throw Object.assign(new Error('Заголовок и контент обязательны'), { statusCode: 400 });
@@ -64,7 +74,7 @@ export async function createArticle(
   if (!imageUrl) {
     throw Object.assign(new Error('Изображение или image_url обязательны'), { statusCode: 400 });
   }
-  const article = await articleModel.create(title, content, userId, imageUrl);
+  const article = await articleModel.create(title, content, userId, imageUrl, isPublished, categoryId);
   if (!article) {
     throw Object.assign(new Error('Не удалось создать статью'), { statusCode: 400 });
   }
@@ -78,6 +88,8 @@ export async function updateArticle(
   content: string,
   newImageUrl: string | null,
   oldImagePath: string | null,
+  isPublished?: boolean,
+  categoryId?: number | null,
 ) {
   if (!title || !content) {
     throw Object.assign(new Error('Заголовок и контент обязательны'), { statusCode: 400 });
@@ -93,8 +105,8 @@ export async function updateArticle(
     imageUrl = oldImagePath;
   }
 
-  const updateData = { title, content, image_url: imageUrl };
-  const article = await articleModel.update(id, userId, updateData);
+  const updateData = { title, content, image_url: imageUrl, category_id: categoryId };
+  const article = await articleModel.update(id, userId, updateData, isPublished);
 
   if (!article) {
     throw Object.assign(new Error('Не удалось обновить статью'), { statusCode: 400 });

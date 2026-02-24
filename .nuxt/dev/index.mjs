@@ -7,7 +7,6 @@ import { parentPort, threadId } from 'node:worker_threads';
 import { escapeHtml } from 'file:///home/dimas/projects/vue-app-test/node_modules/@vue/shared/dist/shared.cjs.js';
 import { promises } from 'node:fs';
 import jwt from 'file:///home/dimas/projects/vue-app-test/node_modules/jsonwebtoken/index.js';
-import axios from 'file:///home/dimas/projects/vue-app-test/node_modules/axios/index.js';
 import bcrypt from 'file:///home/dimas/projects/vue-app-test/node_modules/bcrypt/bcrypt.js';
 import pg from 'file:///home/dimas/projects/vue-app-test/node_modules/pg/esm/index.mjs';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///home/dimas/projects/vue-app-test/node_modules/vue-bundle-renderer/dist/runtime.mjs';
@@ -2593,30 +2592,46 @@ async function getIslandContext(event) {
 	return ctx;
 }
 
-const _lazy_VbFIBW = () => Promise.resolve().then(function () { return index_get$3; });
-const _lazy_KmQ6kL = () => Promise.resolve().then(function () { return _id__delete$1; });
-const _lazy_ZE2R1H = () => Promise.resolve().then(function () { return _id__get$3; });
-const _lazy_t8hjkY = () => Promise.resolve().then(function () { return _id__put$1; });
-const _lazy_o_09qo = () => Promise.resolve().then(function () { return index_get$1; });
-const _lazy_yc3AZu = () => Promise.resolve().then(function () { return index_post$1; });
-const _lazy_0kVEIV = () => Promise.resolve().then(function () { return _id__get$1; });
+const _lazy_QJ8o7r = () => Promise.resolve().then(function () { return _id__get$7; });
+const _lazy_VbFIBW = () => Promise.resolve().then(function () { return index_get$5; });
+const _lazy_KmQ6kL = () => Promise.resolve().then(function () { return _id__delete$3; });
+const _lazy_ZE2R1H = () => Promise.resolve().then(function () { return _id__get$5; });
+const _lazy_t8hjkY = () => Promise.resolve().then(function () { return _id__put$3; });
+const _lazy_N8MwrK = () => Promise.resolve().then(function () { return togglePublish_post$1; });
+const _lazy_o_09qo = () => Promise.resolve().then(function () { return index_get$3; });
+const _lazy_yc3AZu = () => Promise.resolve().then(function () { return index_post$3; });
+const _lazy_0kVEIV = () => Promise.resolve().then(function () { return _id__get$3; });
 const _lazy_ryAgB_ = () => Promise.resolve().then(function () { return checkUsername_post$1; });
 const _lazy_My3T0c = () => Promise.resolve().then(function () { return login_post$1; });
+const _lazy__Xj9LP = () => Promise.resolve().then(function () { return me_get$1; });
 const _lazy_nkMsD6 = () => Promise.resolve().then(function () { return register_post$1; });
+const _lazy_twy3_k = () => Promise.resolve().then(function () { return _id__delete$1; });
+const _lazy_PO9m4T = () => Promise.resolve().then(function () { return _id__get$1; });
+const _lazy_dvfCiT = () => Promise.resolve().then(function () { return _id__put$1; });
+const _lazy_ywYoPt = () => Promise.resolve().then(function () { return index_get$1; });
+const _lazy_Te8vvj = () => Promise.resolve().then(function () { return index_post$1; });
 const _lazy_o6zpM_ = () => Promise.resolve().then(function () { return renderer$1; });
 
 const handlers = [
   { route: '', handler: _ke79ZA, lazy: false, middleware: true, method: undefined },
+  { route: '/api/admin/articles/:id', handler: _lazy_QJ8o7r, lazy: true, middleware: false, method: "get" },
   { route: '/api/admin/articles', handler: _lazy_VbFIBW, lazy: true, middleware: false, method: "get" },
   { route: '/api/articles/:id', handler: _lazy_KmQ6kL, lazy: true, middleware: false, method: "delete" },
   { route: '/api/articles/:id', handler: _lazy_ZE2R1H, lazy: true, middleware: false, method: "get" },
   { route: '/api/articles/:id', handler: _lazy_t8hjkY, lazy: true, middleware: false, method: "put" },
+  { route: '/api/articles/:id/toggle-publish', handler: _lazy_N8MwrK, lazy: true, middleware: false, method: "post" },
   { route: '/api/articles', handler: _lazy_o_09qo, lazy: true, middleware: false, method: "get" },
   { route: '/api/articles', handler: _lazy_yc3AZu, lazy: true, middleware: false, method: "post" },
   { route: '/api/articles/page-of/:id', handler: _lazy_0kVEIV, lazy: true, middleware: false, method: "get" },
   { route: '/api/auth/check-username', handler: _lazy_ryAgB_, lazy: true, middleware: false, method: "post" },
   { route: '/api/auth/login', handler: _lazy_My3T0c, lazy: true, middleware: false, method: "post" },
+  { route: '/api/auth/me', handler: _lazy__Xj9LP, lazy: true, middleware: false, method: "get" },
   { route: '/api/auth/register', handler: _lazy_nkMsD6, lazy: true, middleware: false, method: "post" },
+  { route: '/api/categories/:id', handler: _lazy_twy3_k, lazy: true, middleware: false, method: "delete" },
+  { route: '/api/categories/:id', handler: _lazy_PO9m4T, lazy: true, middleware: false, method: "get" },
+  { route: '/api/categories/:id', handler: _lazy_dvfCiT, lazy: true, middleware: false, method: "put" },
+  { route: '/api/categories', handler: _lazy_ywYoPt, lazy: true, middleware: false, method: "get" },
+  { route: '/api/categories', handler: _lazy_Te8vvj, lazy: true, middleware: false, method: "post" },
   { route: '/__nuxt_error', handler: _lazy_o6zpM_, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: _SxA8c9, lazy: false, middleware: false, method: undefined },
   { route: '/**', handler: _lazy_o6zpM_, lazy: true, middleware: false, method: undefined }
@@ -2960,46 +2975,53 @@ const styles$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const { Pool } = pg;
-const pool$2 = new Pool({
+const pool$7 = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST || process.env.DB_HOST_DOCKER || "localhost",
   database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432
 });
-pool$2.on("error", (err) => {
+pool$7.on("error", (err) => {
   console.error("Unexpected error on idle client", err);
   process.exit(-1);
 });
 function getDbPool() {
-  return pool$2;
+  return pool$7;
 }
 
 function createArticleModel({ pool }) {
-  async function create(title, content, userId, imageUrl) {
+  async function create(title, content, userId, imageUrl, isPublished, categoryId = null) {
     const query = {
       text: `
-        INSERT INTO articles(title, content, author_id, image_url, is_published, created_at)
-        VALUES($1, $2, $3, $4, true, CURRENT_TIMESTAMP)
+        INSERT INTO articles(title, content, author_id, image_url, is_published, category_id, created_at)
+        VALUES($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         RETURNING *
       `,
-      values: [title, content, userId, imageUrl]
+      values: [title, content, userId, imageUrl, isPublished, categoryId]
     };
     const result = await pool.query(query);
     return result.rows[0];
   }
-  async function getAll(page = 1, perPage = 6) {
+  async function getAll(page = 1, perPage = 6, categoryId = null) {
     const offset = (page - 1) * perPage;
+    let whereClause = "WHERE a.is_published = true";
+    const values = [perPage, offset];
+    if (categoryId) {
+      whereClause += " AND a.category_id = $3";
+      values.push(categoryId);
+    }
     const query = {
       text: `
-        SELECT a.*, u.username as author_name
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
         FROM articles a
         JOIN users u ON a.author_id = u.id
-        WHERE a.is_published = true
+        LEFT JOIN categories c ON a.category_id = c.id
+        ${whereClause}
         ORDER BY a.created_at DESC
         LIMIT $1 OFFSET $2
       `,
-      values: [perPage, offset]
+      values
     };
     const result = await pool.query(query);
     return result.rows;
@@ -3007,9 +3029,24 @@ function createArticleModel({ pool }) {
   async function getById(id) {
     const query = {
       text: `
-        SELECT a.*, u.username as author_name
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
         FROM articles a
         JOIN users u ON a.author_id = u.id
+        LEFT JOIN categories c ON a.category_id = c.id
+        WHERE a.id = $1 AND a.is_published = true
+      `,
+      values: [id]
+    };
+    const result = await pool.query(query);
+    return result.rows[0];
+  }
+  async function getByIdAdmin(id) {
+    const query = {
+      text: `
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
+        FROM articles a
+        JOIN users u ON a.author_id = u.id
+        LEFT JOIN categories c ON a.category_id = c.id
         WHERE a.id = $1
       `,
       values: [id]
@@ -3043,17 +3080,25 @@ function createArticleModel({ pool }) {
     const result = await pool.query(query);
     return Number.parseInt(result.rows[0].total, 10);
   }
-  async function getAllAdmin(page = 1, perPage = 6) {
+  async function getAllAdmin(page = 1, perPage = 6, categoryId = null) {
     const offset = (page - 1) * perPage;
+    let whereClause = "";
+    const values = [perPage, offset];
+    if (categoryId) {
+      whereClause = "WHERE a.category_id = $3";
+      values.push(categoryId);
+    }
     const query = {
       text: `
-        SELECT a.*, u.username as author_name
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
         FROM articles a
         JOIN users u ON a.author_id = u.id
+        LEFT JOIN categories c ON a.category_id = c.id
+        ${whereClause}
         ORDER BY a.created_at DESC
         LIMIT $1 OFFSET $2
       `,
-      values: [perPage, offset]
+      values
     };
     const result = await pool.query(query);
     return result.rows;
@@ -3065,22 +3110,36 @@ function createArticleModel({ pool }) {
     const result = await pool.query(query);
     return Number.parseInt(result.rows[0].total, 10);
   }
-  async function update(id, userId, updateData) {
-    var _a, _b, _c, _d;
+  async function update(id, userId, updateData, isPublished) {
+    var _a, _b, _c, _d, _e;
+    let queryText = `
+      UPDATE articles
+      SET title = COALESCE($1, title),
+          content = COALESCE($2, content),
+          image_url = COALESCE($3, image_url),
+          category_id = COALESCE($4, category_id),
+          updated_at = CURRENT_TIMESTAMP
+    `;
+    const values = [
+      (_a = updateData.title) != null ? _a : null,
+      (_b = updateData.content) != null ? _b : null,
+      (_c = updateData.image_url) != null ? _c : null,
+      (_d = updateData.category_id) != null ? _d : null
+    ];
+    let paramIndex = 5;
+    if (isPublished !== void 0) {
+      queryText += `, is_published = $${paramIndex}`;
+      values.push(isPublished);
+      paramIndex++;
+    }
+    queryText += ` WHERE id = $${paramIndex} AND author_id = $${paramIndex + 1} RETURNING *`;
+    values.push(id, userId);
     const query = {
-      text: `
-        UPDATE articles
-        SET title = COALESCE($1, title),
-            content = COALESCE($2, content),
-            image_url = COALESCE($3, image_url),
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4 AND author_id = $5
-        RETURNING *
-      `,
-      values: [(_a = updateData.title) != null ? _a : null, (_b = updateData.content) != null ? _b : null, (_c = updateData.image_url) != null ? _c : null, id, userId]
+      text: queryText,
+      values
     };
     const result = await pool.query(query);
-    return (_d = result.rows[0]) != null ? _d : null;
+    return (_e = result.rows[0]) != null ? _e : null;
   }
   async function remove(id, userId) {
     var _a;
@@ -3096,6 +3155,7 @@ function createArticleModel({ pool }) {
     getAll,
     getAllAdmin,
     getById,
+    getByIdAdmin,
     getIndexById,
     getCount,
     getCountAdmin,
@@ -3104,10 +3164,10 @@ function createArticleModel({ pool }) {
   };
 }
 
-const pool$1 = getDbPool();
-const articleModel = createArticleModel({ pool: pool$1 });
-async function getArticles(page, perPage) {
-  const articles = await articleModel.getAll(page, perPage);
+const pool$6 = getDbPool();
+const articleModel = createArticleModel({ pool: pool$6 });
+async function getArticles(page, perPage, categoryId) {
+  const articles = await articleModel.getAll(page, perPage, categoryId);
   const total = await articleModel.getCount();
   const totalPages = Math.ceil(total / perPage);
   return {
@@ -3120,8 +3180,8 @@ async function getArticles(page, perPage) {
     }
   };
 }
-async function getAdminArticles(page, perPage) {
-  const articles = await articleModel.getAllAdmin(page, perPage);
+async function getAdminArticles(page, perPage, categoryId) {
+  const articles = await articleModel.getAllAdmin(page, perPage, categoryId);
   const total = await articleModel.getCountAdmin();
   const totalPages = Math.ceil(total / perPage);
   return {
@@ -3141,25 +3201,32 @@ async function getArticleById(id) {
   }
   return article;
 }
+async function getArticleByIdAdmin(id) {
+  const article = await articleModel.getByIdAdmin(id);
+  if (!article) {
+    throw Object.assign(new Error("Article not found"), { statusCode: 404 });
+  }
+  return article;
+}
 async function getPageOfArticle(id, perPage) {
   const index = await articleModel.getIndexById(id);
   const page = Math.floor(index / perPage) + 1;
   return { page };
 }
-async function createArticle(title, content, userId, imageUrl) {
+async function createArticle(title, content, userId, imageUrl, isPublished = true, categoryId = null) {
   if (!title || !content) {
     throw Object.assign(new Error("\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u0438 \u043A\u043E\u043D\u0442\u0435\u043D\u0442 \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B"), { statusCode: 400 });
   }
   if (!imageUrl) {
     throw Object.assign(new Error("\u0418\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0435 \u0438\u043B\u0438 image_url \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B"), { statusCode: 400 });
   }
-  const article = await articleModel.create(title, content, userId, imageUrl);
+  const article = await articleModel.create(title, content, userId, imageUrl, isPublished, categoryId);
   if (!article) {
     throw Object.assign(new Error("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u0441\u0442\u0430\u0442\u044C\u044E"), { statusCode: 400 });
   }
   return article;
 }
-async function updateArticle(id, userId, title, content, newImageUrl, oldImagePath) {
+async function updateArticle(id, userId, title, content, newImageUrl, oldImagePath, isPublished, categoryId) {
   if (!title || !content) {
     throw Object.assign(new Error("\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u0438 \u043A\u043E\u043D\u0442\u0435\u043D\u0442 \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B"), { statusCode: 400 });
   }
@@ -3170,8 +3237,8 @@ async function updateArticle(id, userId, title, content, newImageUrl, oldImagePa
   if (!imageUrl && oldImagePath) {
     imageUrl = oldImagePath;
   }
-  const updateData = { title, content, image_url: imageUrl };
-  const article = await articleModel.update(id, userId, updateData);
+  const updateData = { title, content, image_url: imageUrl, category_id: categoryId };
+  const article = await articleModel.update(id, userId, updateData, isPublished);
   if (!article) {
     throw Object.assign(new Error("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0441\u0442\u0430\u0442\u044C\u044E"), { statusCode: 400 });
   }
@@ -3226,14 +3293,38 @@ function requireAdmin(event) {
   return user;
 }
 
-const index_get$2 = defineEventHandler(async (event) => {
+const _id__get$6 = defineEventHandler(async (event) => {
+  var _a, _b, _c, _d;
+  requireAdmin(event);
+  const id = Number.parseInt((_b = (_a = event.context.params) == null ? void 0 : _a.id) != null ? _b : "", 10);
+  if (!id) {
+    throw createError({ statusCode: 400, statusMessage: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 ID" });
+  }
+  try {
+    return await getArticleByIdAdmin(id);
+  } catch (error) {
+    const statusCode = (_c = error.statusCode) != null ? _c : 400;
+    throw createError({
+      statusCode,
+      statusMessage: (_d = error.message) != null ? _d : "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0441\u0442\u0430\u0442\u044C\u0438"
+    });
+  }
+});
+
+const _id__get$7 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: _id__get$6
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const index_get$4 = defineEventHandler(async (event) => {
   var _a, _b, _c;
   requireAdmin(event);
   const query = getQuery$1(event);
   const page = Number.parseInt((_a = query.page) != null ? _a : "1", 10) || 1;
   const perPage = Number.parseInt((_b = query.per_page) != null ? _b : "4", 10) || 4;
+  const categoryId = query.category_id ? Number.parseInt(query.category_id, 10) : null;
   try {
-    return await getAdminArticles(page, perPage);
+    return await getAdminArticles(page, perPage, categoryId);
   } catch (error) {
     throw createError({
       statusCode: 400,
@@ -3242,12 +3333,12 @@ const index_get$2 = defineEventHandler(async (event) => {
   }
 });
 
-const index_get$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const index_get$5 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: index_get$2
+  default: index_get$4
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const _id__delete = defineEventHandler(async (event) => {
+const _id__delete$2 = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
   const user = requireAdmin(event);
   const id = Number.parseInt((_b = (_a = event.context.params) == null ? void 0 : _a.id) != null ? _b : "", 10);
@@ -3267,12 +3358,12 @@ const _id__delete = defineEventHandler(async (event) => {
   }
 });
 
-const _id__delete$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const _id__delete$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: _id__delete
+  default: _id__delete$2
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const _id__get$2 = defineEventHandler(async (event) => {
+const _id__get$4 = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
   const id = Number.parseInt((_b = (_a = event.context.params) == null ? void 0 : _a.id) != null ? _b : "", 10);
   if (!id) {
@@ -3289,12 +3380,12 @@ const _id__get$2 = defineEventHandler(async (event) => {
   }
 });
 
-const _id__get$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const _id__get$5 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: _id__get$2
+  default: _id__get$4
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const _id__put = defineEventHandler(async (event) => {
+const _id__put$2 = defineEventHandler(async (event) => {
   var _a, _b, _c, _d;
   const user = requireAdmin(event);
   const id = Number.parseInt((_b = (_a = event.context.params) == null ? void 0 : _a.id) != null ? _b : "", 10);
@@ -3312,6 +3403,10 @@ const _id__put = defineEventHandler(async (event) => {
   const title = getField("title");
   const content = getField("content");
   const newImageUrlField = getField("image_url");
+  const isPublishedField = getField("is_published");
+  const isPublished = isPublishedField ? isPublishedField === "true" : void 0;
+  const categoryIdField = getField("category_id");
+  const categoryId = categoryIdField ? parseInt(categoryIdField) : void 0;
   const imagePart = formData.find((part) => part.name === "image" && part.filename);
   let newImageUrl = null;
   if (imagePart && imagePart.filename && imagePart.data) {
@@ -3341,7 +3436,11 @@ const _id__put = defineEventHandler(async (event) => {
       String(title != null ? title : ""),
       String(content != null ? content : ""),
       newImageUrl,
-      oldImagePath
+      oldImagePath,
+      isPublished,
+      // Добавляем isPublished как седьмой аргумент
+      categoryId
+      // Добавляем categoryId как восьмой аргумент
     );
     return { data: { article } };
   } catch (error) {
@@ -3353,18 +3452,73 @@ const _id__put = defineEventHandler(async (event) => {
   }
 });
 
-const _id__put$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const _id__put$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: _id__put
+  default: _id__put$2
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const index_get = defineEventHandler(async (event) => {
+const togglePublish_post = defineEventHandler(async (event) => {
+  var _a, _b, _c, _d;
+  requireAdmin(event);
+  const id = Number.parseInt((_b = (_a = event.context.params) == null ? void 0 : _a.id) != null ? _b : "", 10);
+  if (!id) {
+    throw createError({ statusCode: 400, statusMessage: "\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 ID" });
+  }
+  const pool = getDbPool();
+  try {
+    const currentArticleQuery = await pool.query(
+      "SELECT is_published FROM articles WHERE id = $1",
+      [id]
+    );
+    if (!currentArticleQuery.rows.length) {
+      throw createError({ statusCode: 404, statusMessage: "\u0421\u0442\u0430\u0442\u044C\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430" });
+    }
+    const currentStatus = currentArticleQuery.rows[0].is_published;
+    const newStatus = !currentStatus;
+    const updateQuery = await pool.query(
+      "UPDATE articles SET is_published = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *",
+      [newStatus, id]
+    );
+    const updatedArticle = updateQuery.rows[0];
+    return {
+      data: {
+        article: updatedArticle,
+        message: newStatus ? "\u0421\u0442\u0430\u0442\u044C\u044F \u043E\u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u043D\u0430" : "\u0421\u0442\u0430\u0442\u044C\u044F \u0441\u043D\u044F\u0442\u0430 \u0441 \u043F\u0443\u0431\u043B\u0438\u043A\u0430\u0446\u0438\u0438"
+      }
+    };
+  } catch (error) {
+    throw createError({
+      statusCode: (_c = error.statusCode) != null ? _c : 500,
+      statusMessage: (_d = error.message) != null ? _d : "\u041E\u0448\u0438\u0431\u043A\u0430 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u043F\u0443\u0431\u043B\u0438\u043A\u0430\u0446\u0438\u0438"
+    });
+  }
+});
+
+const togglePublish_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: togglePublish_post
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const cache = /* @__PURE__ */ new Map();
+const CACHE_TTL = 5 * 60 * 1e3;
+const index_get$2 = defineEventHandler(async (event) => {
   var _a, _b, _c;
   const query = getQuery$1(event);
   const page = Number.parseInt((_a = query.page) != null ? _a : "1", 10) || 1;
   const perPage = Number.parseInt((_b = query.per_page) != null ? _b : "6", 10) || 6;
+  const categoryId = query.category_id ? Number.parseInt(query.category_id, 10) : null;
+  const cacheKey = `articles:${page}:${perPage}:${categoryId || "all"}`;
   try {
-    return await getArticles(page, perPage);
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
+    }
+    const result = await getArticles(page, perPage, categoryId);
+    cache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+    return result;
   } catch (error) {
     throw createError({
       statusCode: 400,
@@ -3373,12 +3527,12 @@ const index_get = defineEventHandler(async (event) => {
   }
 });
 
-const index_get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const index_get$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: index_get
+  default: index_get$2
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const index_post = defineEventHandler(async (event) => {
+const index_post$2 = defineEventHandler(async (event) => {
   var _a, _b;
   const user = requireAdmin(event);
   const formData = await readMultipartFormData(event);
@@ -3391,6 +3545,10 @@ const index_post = defineEventHandler(async (event) => {
   };
   const title = getField("title");
   const content = getField("content");
+  const isPublishedField = getField("is_published");
+  const isPublished = isPublishedField ? isPublishedField === "true" : true;
+  const categoryIdField = getField("category_id");
+  const categoryId = categoryIdField ? parseInt(categoryIdField) : null;
   const imagePart = formData.find((part) => part.name === "image" && part.filename);
   let imageUrl = null;
   if (imagePart && imagePart.filename && imagePart.data) {
@@ -3407,7 +3565,11 @@ const index_post = defineEventHandler(async (event) => {
       String(title != null ? title : ""),
       String(content != null ? content : ""),
       user.id,
-      imageUrl
+      imageUrl,
+      isPublished,
+      // ТЕПЕРЬ ПЕРЕДАЕМ ОПРЕДЕЛЕННУЮ ПЕРЕМЕННУЮ
+      categoryId
+      // ПЕРЕДАЕМ category_id
     );
     return { data: { article } };
   } catch (error) {
@@ -3419,12 +3581,12 @@ const index_post = defineEventHandler(async (event) => {
   }
 });
 
-const index_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const index_post$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: index_post
+  default: index_post$2
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const _id__get = defineEventHandler(async (event) => {
+const _id__get$2 = defineEventHandler(async (event) => {
   var _a, _b, _c, _d, _e;
   const id = Number.parseInt((_b = (_a = event.context.params) == null ? void 0 : _a.id) != null ? _b : "", 10);
   if (!id) {
@@ -3443,9 +3605,9 @@ const _id__get = defineEventHandler(async (event) => {
   }
 });
 
-const _id__get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const _id__get$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: _id__get
+  default: _id__get$2
 }, Symbol.toStringTag, { value: 'Module' }));
 
 function createUserModel({ pool }) {
@@ -3489,19 +3651,20 @@ function createUserModel({ pool }) {
   };
 }
 
-const pool = getDbPool();
-const userModel = createUserModel({ pool });
+const pool$5 = getDbPool();
+const userModel = createUserModel({ pool: pool$5 });
 const JWT_SECRET = process.env.JWT_SECRET;
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
 async function verifyRecaptcha(recaptcha) {
   try {
-    const response = await axios.post("https://www.google.com/recaptcha/api/siteverify", null, {
-      params: {
+    const response = await $fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      query: {
         secret: RECAPTCHA_SECRET,
         response: recaptcha
       }
     });
-    return response.data.success;
+    return response.success;
   } catch {
     return false;
   }
@@ -3588,6 +3751,26 @@ const login_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProper
   default: login_post
 }, Symbol.toStringTag, { value: 'Module' }));
 
+const me_get = defineEventHandler(async (event) => {
+  const user = getUserFromRequest(event);
+  if (!user) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0430\u0432\u0442\u043E\u0440\u0438\u0437\u0430\u0446\u0438\u044F"
+    });
+  }
+  return {
+    id: user.id,
+    username: user.username,
+    is_admin: user.is_admin
+  };
+});
+
+const me_get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: me_get
+}, Symbol.toStringTag, { value: 'Module' }));
+
 const register_post = defineEventHandler(async (event) => {
   var _a;
   const body = await readBody(event);
@@ -3605,6 +3788,307 @@ const register_post = defineEventHandler(async (event) => {
 const register_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: register_post
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function createCategoryModel({ pool }) {
+  async function findAll() {
+    const result = await pool.query(`
+      SELECT * FROM categories 
+      ORDER BY name ASC
+    `);
+    return result.rows;
+  }
+  async function findById(id) {
+    const result = await pool.query(`
+      SELECT * FROM categories 
+      WHERE id = $1
+    `, [id]);
+    return result.rows[0] || null;
+  }
+  async function findBySlug(slug) {
+    const result = await pool.query(`
+      SELECT * FROM categories 
+      WHERE slug = $1
+    `, [slug]);
+    return result.rows[0] || null;
+  }
+  async function create(data) {
+    const slug = data.slug || data.name.toLowerCase().replace(/[^a-zа-яё0-9\s]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^[-]+|[-]+$/g, "");
+    const result = await pool.query(`
+      INSERT INTO categories (name, slug, description)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `, [data.name, slug, data.description || null]);
+    return result.rows[0];
+  }
+  async function update(id, data) {
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+    if (data.name !== void 0) {
+      fields.push(`name = $${paramIndex++}`);
+      values.push(data.name);
+    }
+    if (data.slug !== void 0) {
+      fields.push(`slug = $${paramIndex++}`);
+      values.push(data.slug);
+    }
+    if (data.description !== void 0) {
+      fields.push(`description = $${paramIndex++}`);
+      values.push(data.description || null);
+    }
+    if (fields.length === 0) {
+      return findById(id);
+    }
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(id);
+    const result = await pool.query(`
+      UPDATE categories 
+      SET ${fields.join(", ")}
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `, values);
+    return result.rows[0];
+  }
+  async function deleteCategory(id) {
+    const articlesCount = await pool.query(`
+      SELECT COUNT(*) as count FROM articles 
+      WHERE category_id = $1
+    `, [id]);
+    if (parseInt(articlesCount.rows[0].count) > 0) {
+      throw new Error("\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E, \u0432 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0435\u0441\u0442\u044C \u0441\u0442\u0430\u0442\u044C\u0438");
+    }
+    const result = await pool.query(`
+      DELETE FROM categories 
+      WHERE id = $1
+      RETURNING *
+    `, [id]);
+    return result.rows[0];
+  }
+  async function getWithArticlesCount() {
+    const result = await pool.query(`
+      SELECT 
+        c.*,
+        COUNT(a.id) as articles_count
+      FROM categories c
+      LEFT JOIN articles a ON c.id = a.category_id
+      GROUP BY c.id
+      ORDER BY c.name ASC
+    `);
+    return result.rows;
+  }
+  return {
+    findAll,
+    findById,
+    findBySlug,
+    create,
+    update,
+    delete: deleteCategory,
+    getWithArticlesCount
+  };
+}
+
+const pool$4 = getDbPool();
+const categoryModel$4 = createCategoryModel({ pool: pool$4 });
+const _id__delete = defineEventHandler(async (event) => {
+  try {
+    const categoryId = parseInt(getRouterParam(event, "id") || "");
+    if (isNaN(categoryId)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 ID \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438"
+      });
+    }
+    const category = await categoryModel$4.delete(categoryId);
+    if (!category) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430"
+      });
+    }
+    return {
+      data: category
+    };
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    throw createError({
+      statusCode: 500,
+      statusMessage: error.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438"
+    });
+  }
+});
+
+const _id__delete$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: _id__delete
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const pool$3 = getDbPool();
+const categoryModel$3 = createCategoryModel({ pool: pool$3 });
+const _id__get = defineEventHandler(async (event) => {
+  try {
+    const categoryId = parseInt(getRouterParam(event, "id") || "");
+    if (isNaN(categoryId)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 ID \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438"
+      });
+    }
+    const category = await categoryModel$3.findById(categoryId);
+    if (!category) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430"
+      });
+    }
+    return {
+      data: category
+    };
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    throw createError({
+      statusCode: 500,
+      statusMessage: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438"
+    });
+  }
+});
+
+const _id__get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: _id__get
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const pool$2 = getDbPool();
+const categoryModel$2 = createCategoryModel({ pool: pool$2 });
+const _id__put = defineEventHandler(async (event) => {
+  var _a, _b, _c;
+  try {
+    const categoryId = parseInt(getRouterParam(event, "id") || "");
+    if (isNaN(categoryId)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 ID \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438"
+      });
+    }
+    const body = await readBody(event);
+    if (body.name !== void 0) {
+      if (!body.name || body.name.trim().length === 0) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E"
+        });
+      }
+      if (body.name.length > 255) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0434\u043B\u0438\u043D\u043D\u043E\u0435"
+        });
+      }
+    }
+    const category = await categoryModel$2.update(categoryId, {
+      name: (_a = body.name) == null ? void 0 : _a.trim(),
+      slug: (_b = body.slug) == null ? void 0 : _b.trim(),
+      description: ((_c = body.description) == null ? void 0 : _c.trim()) || void 0
+    });
+    if (!category) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430"
+      });
+    }
+    return {
+      data: category
+    };
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    if (error.code === "23505") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F \u0441 \u0442\u0430\u043A\u0438\u043C \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435\u043C \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
+      });
+    }
+    throw createError({
+      statusCode: 500,
+      statusMessage: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438"
+    });
+  }
+});
+
+const _id__put$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: _id__put
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const pool$1 = getDbPool();
+const categoryModel$1 = createCategoryModel({ pool: pool$1 });
+const index_get = defineEventHandler(async (event) => {
+  try {
+    const categories = await categoryModel$1.findAll();
+    return {
+      data: categories
+    };
+  } catch (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0439"
+    });
+  }
+});
+
+const index_get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: index_get
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const pool = getDbPool();
+const categoryModel = createCategoryModel({ pool });
+const index_post = defineEventHandler(async (event) => {
+  var _a, _b;
+  try {
+    const body = await readBody(event);
+    if (!body.name || body.name.trim().length === 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E"
+      });
+    }
+    if (body.name.length > 255) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438 \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0434\u043B\u0438\u043D\u043D\u043E\u0435"
+      });
+    }
+    const category = await categoryModel.create({
+      name: body.name.trim(),
+      slug: (_a = body.slug) == null ? void 0 : _a.trim(),
+      description: ((_b = body.description) == null ? void 0 : _b.trim()) || null
+    });
+    return {
+      data: category
+    };
+  } catch (error) {
+    if (error.code === "23505") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044F \u0441 \u0442\u0430\u043A\u0438\u043C \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u0435\u043C \u0443\u0436\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u0435\u0442"
+      });
+    }
+    throw createError({
+      statusCode: 500,
+      statusMessage: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0438"
+    });
+  }
+});
+
+const index_post$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: index_post
 }, Symbol.toStringTag, { value: 'Module' }));
 
 function renderPayloadResponse(ssrContext) {

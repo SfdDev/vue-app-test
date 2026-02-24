@@ -23,6 +23,15 @@ export default defineEventHandler(async (event) => {
   const title = getField('title');
   const content = getField('content');
   const newImageUrlField = getField('image_url');
+  
+  // Получаем is_published из формы (если есть)
+  const isPublishedField = getField('is_published');
+  // Преобразуем строку в boolean, если поле передано
+  const isPublished = isPublishedField ? isPublishedField === 'true' : undefined;
+
+  // Получаем category_id из формы
+  const categoryIdField = getField('category_id');
+  const categoryId = categoryIdField ? parseInt(categoryIdField) : undefined;
 
   const imagePart = formData.find((part) => part.name === 'image' && part.filename);
 
@@ -59,6 +68,8 @@ export default defineEventHandler(async (event) => {
       String(content ?? ''),
       newImageUrl,
       oldImagePath,
+      isPublished, // Добавляем isPublished как седьмой аргумент
+      categoryId, // Добавляем categoryId как восьмой аргумент
     );
     return { data: { article } };
   } catch (error: any) {
@@ -69,4 +80,3 @@ export default defineEventHandler(async (event) => {
     });
   }
 });
-

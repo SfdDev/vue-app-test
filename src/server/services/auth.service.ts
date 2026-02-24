@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import axios from 'axios';
 import bcrypt from 'bcrypt';
 import { getDbPool } from '../utils/db';
 import { createUserModel } from '../models/user.model';
@@ -18,13 +17,14 @@ export interface AuthUser {
 
 export async function verifyRecaptcha(recaptcha: string): Promise<boolean> {
   try {
-    const response = await axios.post('https://www.google.com/recaptcha/api/siteverify', null, {
-      params: {
+    const response = await $fetch<{ success: boolean }>('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      query: {
         secret: RECAPTCHA_SECRET,
         response: recaptcha,
       },
     });
-    return response.data.success;
+    return response.success;
   } catch {
     return false;
   }

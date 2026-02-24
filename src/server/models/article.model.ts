@@ -4,10 +4,13 @@ export interface ArticleRecord {
   content: string;
   author_id: number;
   image_url: string | null;
+  category_id: number | null;
   created_at: string;
   updated_at: string | null;
   is_published: boolean;
   author_name?: string;
+  category_name?: string;
+  category_slug?: string;
 }
 
 export interface PaginatedArticles {
@@ -27,31 +30,41 @@ export interface ArticleModelDependencies {
 }
 
 export function createArticleModel({ pool }: ArticleModelDependencies) {
-  async function create(title: string, content: string, userId: number, imageUrl: string | null) {
+  async function create(title: string, content: string, userId: number, imageUrl: string | null, isPublished: boolean, categoryId: number | null = null) {
     const query = {
       text: `
-        INSERT INTO articles(title, content, author_id, image_url, is_published, created_at)
-        VALUES($1, $2, $3, $4, true, CURRENT_TIMESTAMP)
+        INSERT INTO articles(title, content, author_id, image_url, is_published, category_id, created_at)
+        VALUES($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         RETURNING *
       `,
-      values: [title, content, userId, imageUrl],
+      values: [title, content, userId, imageUrl, isPublished, categoryId],
     };
     const result = await pool.query<ArticleRecord>(query);
     return result.rows[0];
   }
 
-  async function getAll(page = 1, perPage = 6): Promise<ArticleRecord[]> {
+  async function getAll(page = 1, perPage = 6, categoryId: number | null = null): Promise<ArticleRecord[]> {
     const offset = (page - 1) * perPage;
+    
+    let whereClause = 'WHERE a.is_published = true';
+    const values = [perPage, offset];
+    
+    if (categoryId) {
+      whereClause += ' AND a.category_id = $3';
+      values.push(categoryId);
+    }
+    
     const query = {
       text: `
-        SELECT a.*, u.username as author_name
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
         FROM articles a
         JOIN users u ON a.author_id = u.id
-        WHERE a.is_published = true
+        LEFT JOIN categories c ON a.category_id = c.id
+        ${whereClause}
         ORDER BY a.created_at DESC
         LIMIT $1 OFFSET $2
       `,
-      values: [perPage, offset],
+      values: values,
     };
     const result = await pool.query<ArticleRecord>(query);
     return result.rows;
@@ -60,9 +73,25 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
   async function getById(id: number): Promise<ArticleRecord | undefined> {
     const query = {
       text: `
-        SELECT a.*, u.username as author_name
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
         FROM articles a
         JOIN users u ON a.author_id = u.id
+        LEFT JOIN categories c ON a.category_id = c.id
+        WHERE a.id = $1 AND a.is_published = true
+      `,
+      values: [id],
+    };
+    const result = await pool.query<ArticleRecord>(query);
+    return result.rows[0];
+  }
+
+  async function getByIdAdmin(id: number): Promise<ArticleRecord | undefined> {
+    const query = {
+      text: `
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
+        FROM articles a
+        JOIN users u ON a.author_id = u.id
+        LEFT JOIN categories c ON a.category_id = c.id
         WHERE a.id = $1
       `,
       values: [id],
@@ -99,17 +128,28 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
     return Number.parseInt(result.rows[0].total, 10);
   }
 
-  async function getAllAdmin(page = 1, perPage = 6): Promise<ArticleRecord[]> {
+  async function getAllAdmin(page = 1, perPage = 6, categoryId: number | null = null): Promise<ArticleRecord[]> {
     const offset = (page - 1) * perPage;
+    
+    let whereClause = '';
+    const values = [perPage, offset];
+    
+    if (categoryId) {
+      whereClause = 'WHERE a.category_id = $3';
+      values.push(categoryId);
+    }
+    
     const query = {
       text: `
-        SELECT a.*, u.username as author_name
+        SELECT a.*, u.username as author_name, c.name as category_name, c.slug as category_slug
         FROM articles a
         JOIN users u ON a.author_id = u.id
+        LEFT JOIN categories c ON a.category_id = c.id
+        ${whereClause}
         ORDER BY a.created_at DESC
         LIMIT $1 OFFSET $2
       `,
-      values: [perPage, offset],
+      values: values,
     };
     const result = await pool.query<ArticleRecord>(query);
     return result.rows;
@@ -126,20 +166,41 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
   async function update(
     id: number,
     userId: number,
-    updateData: { title?: string; content?: string; image_url?: string | null },
+    updateData: { title?: string; content?: string; image_url?: string | null; category_id?: number | null },
+    isPublished?: boolean  // Добавляем опциональный параметр
   ): Promise<ArticleRecord | null> {
+    // Динамически строим запрос в зависимости от того, передан ли isPublished
+    let queryText = `
+      UPDATE articles
+      SET title = COALESCE($1, title),
+          content = COALESCE($2, content),
+          image_url = COALESCE($3, image_url),
+          category_id = COALESCE($4, category_id),
+          updated_at = CURRENT_TIMESTAMP
+    `;
+    
+    const values: any[] = [
+      updateData.title ?? null, 
+      updateData.content ?? null, 
+      updateData.image_url ?? null,
+      updateData.category_id ?? null
+    ];
+    let paramIndex = 5;
+    
+    if (isPublished !== undefined) {
+      queryText += `, is_published = $${paramIndex}`;
+      values.push(isPublished);
+      paramIndex++;
+    }
+    
+    queryText += ` WHERE id = $${paramIndex} AND author_id = $${paramIndex + 1} RETURNING *`;
+    values.push(id, userId);
+    
     const query = {
-      text: `
-        UPDATE articles
-        SET title = COALESCE($1, title),
-            content = COALESCE($2, content),
-            image_url = COALESCE($3, image_url),
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4 AND author_id = $5
-        RETURNING *
-      `,
-      values: [updateData.title ?? null, updateData.content ?? null, updateData.image_url ?? null, id, userId],
+      text: queryText,
+      values: values,
     };
+    
     const result = await pool.query<ArticleRecord>(query);
     return result.rows[0] ?? null;
   }
@@ -158,6 +219,7 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
     getAll,
     getAllAdmin,
     getById,
+    getByIdAdmin,
     getIndexById,
     getCount,
     getCountAdmin,

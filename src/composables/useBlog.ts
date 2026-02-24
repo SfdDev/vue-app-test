@@ -14,14 +14,29 @@ export function useBlog(perPage = 6, baseRoute = '/blog') {
     await articlesStore.loadArticles(page, perPage);
   };
 
+  const loadArticles = async (page: number, categoryId?: number | null) => {
+    await articlesStore.loadArticles(page, perPage, categoryId);
+  };
+
   onMounted(loadInitialData);
 
+  // Следим за изменениями URL для обновления данных
   watch(
     () => route.query.page,
     async (newPage) => {
       const page = Number.parseInt((newPage as string) || '1', 10) || 1;
       if (page !== articlesStore.pagination.currentPage) {
         await articlesStore.loadArticles(page, perPage);
+      }
+    },
+  );
+
+  // Следим за изменениями currentPage для загрузки данных
+  watch(
+    () => articlesStore.pagination.currentPage,
+    async (newPage) => {
+      if (newPage && newPage !== Number.parseInt((route.query.page as string) || '1', 10)) {
+        await articlesStore.loadArticles(newPage, perPage);
       }
     },
   );
@@ -35,14 +50,10 @@ export function useBlog(perPage = 6, baseRoute = '/blog') {
       return;
     }
 
+    // Просто обновляем данные, URL обновится в компоненте пагинации
     if (pageNum !== articlesStore.pagination.currentPage) {
       try {
         await articlesStore.loadArticles(pageNum, perPage);
-        if (pageNum === 1) {
-          router.push({ path: baseRoute });
-        } else {
-          router.push({ path: baseRoute, query: { page: pageNum } });
-        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Ошибка при загрузке страницы:', error);
@@ -54,6 +65,7 @@ export function useBlog(perPage = 6, baseRoute = '/blog') {
     articles,
     pagination: computed(() => articlesStore.pagination),
     changePage,
+    loadArticles,
   };
 }
 

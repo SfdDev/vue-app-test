@@ -1,14 +1,27 @@
 <script setup lang="ts">
 import Hero from '@/components/hero.vue';
 import Pagination from '@/components/UI/pagination.vue';
+import CategoryFilter from '@/components/CategoryFilter.vue';
 import { formatDate, getFullImageUrl } from '@/utils/common';
 import { useBlog } from '@/composables/useBlog';
+import { ref, watch } from 'vue';
 
-const { articles, pagination, changePage } = useBlog(6, '/blog');
+const { articles, pagination, loadArticles } = useBlog(6, '/blog');
+const selectedCategory = ref<number | null>(null);
+
+// Следим за изменением категории и перезагружаем статьи
+watch(selectedCategory, async (newCategory) => {
+  await loadArticles(1, newCategory);
+});
+
+function onCategoryChanged(categoryId: number | null) {
+  selectedCategory.value = categoryId;
+}
 </script>
 
 <template>
   <Hero />
+  <CategoryFilter @categoryChanged="onCategoryChanged" />
   <div class="blog__content">
     <div class="container">
       <div class="row">
@@ -36,7 +49,11 @@ const { articles, pagination, changePage } = useBlog(6, '/blog');
               <div class="card__author">
                 Автор: {{ article.author_name }}
               </div>
-              <hr class="hr-pixel">
+              <hr class="hr-pixel" v-if="article.category_name">
+              <div class="card__category" v-if="article.category_name">
+                Категория: {{ article.category_name }}
+              </div>
+              <hr class="hr-pixel" v-if="article.category_name">
               <p class="card__description">
                 {{ article.content }}...
               </p>
@@ -58,7 +75,7 @@ const { articles, pagination, changePage } = useBlog(6, '/blog');
       <Pagination
         :total-pages="pagination.totalPages"
         :model-value="pagination.currentPage"
-        @update:model-value="changePage"
+        @update:model-value="(page) => pagination.currentPage = page"
       />
     </div>
   </div>

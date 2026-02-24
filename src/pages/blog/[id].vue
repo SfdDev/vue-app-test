@@ -15,7 +15,7 @@ const article = computed(() => articlesStore.article);
 
 const currentIndex = computed(() => {
   if (!article.value || !articlesStore.articles.length) return -1;
-  return articlesStore.articles.findIndex((a) => a.id === article.value?.id);
+  return articlesStore.articles.findIndex((a: any) => a.id === article.value?.id);
 });
 
 const canGoPrevious = computed(() => {
@@ -46,7 +46,7 @@ async function goToPrevious() {
   if (!article.value?.id) return;
 
   const { articles, pagination } = articlesStore;
-  const idx = articles.findIndex((a) => a.id === article.value?.id);
+  const idx = articles.findIndex((a: any) => a.id === article.value?.id);
 
   if (idx > 0) {
     const prevArticle = articles[idx - 1];
@@ -69,7 +69,7 @@ async function goToNext() {
   if (!article.value?.id) return;
 
   const { articles, pagination } = articlesStore;
-  const idx = articles.findIndex((a) => a.id === article.value?.id);
+  const idx = articles.findIndex((a: any) => a.id === article.value?.id);
 
   if (idx < articles.length - 1) {
     const nextArticle = articles[idx + 1];

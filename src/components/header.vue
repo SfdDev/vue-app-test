@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from '#imports';
 import { useArticlesStore } from '@/store/articles';
 import { useAuthStore } from '@/store/auth';
@@ -47,11 +47,46 @@ const toggleMenu = () => {
 
 const allNavLinks = computed(() => {
   const links = [...navLinks.value];
-  if ((authStore.user as any)?.is_admin) {
+  
+  // Добавляем отладочные логи
+  console.log('Computing nav links, auth state:', {
+    isClient: process.client,
+    isAuthenticated: authStore.isAuthenticated,
+    isAdmin: authStore.isAdmin
+  });
+  
+  // Проверяем только на клиенте, чтобы избежать проблем с SSR
+  if (process.client && authStore.isAuthenticated && authStore.isAdmin) {
+    console.log('Adding admin link');
     links.push({ text: 'Админ-панель', href: '/admin' });
   }
+  
+  console.log('Final links:', links.map(l => l.text));
   return links;
 });
+
+// Обновляем навигацию после загрузки на клиенте
+onMounted(() => {
+  console.log('Header mounted, auth state:', {
+    isAuthenticated: authStore.isAuthenticated,
+    isAdmin: authStore.isAdmin,
+    user: authStore.user
+  });
+});
+
+// Следим за изменениями авторизации
+watch(
+  () => ({
+    isAuthenticated: authStore.isAuthenticated,
+    isAdmin: authStore.isAdmin
+  }),
+  (newState) => {
+    console.log('Auth state changed:', newState);
+    // Принудительно обновляем computed, вызывая его
+    void allNavLinks.value;
+  },
+  { immediate: true }
+);
 </script>
 
 <template>

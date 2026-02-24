@@ -3,6 +3,9 @@ import type { Serialize, Simplify } from "nitropack/types";
 declare module "nitropack/types" {
   type Awaited<T> = T extends PromiseLike<infer U> ? Awaited<U> : T
   interface InternalApi {
+    '/api/admin/articles/:id': {
+      'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/admin/articles/[id].get').default>>>>
+    }
     '/api/admin/articles': {
       'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/admin/articles/index.get').default>>>>
     }
@@ -10,6 +13,9 @@ declare module "nitropack/types" {
       'delete': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/articles/[id].delete').default>>>>
       'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/articles/[id].get').default>>>>
       'put': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/articles/[id].put').default>>>>
+    }
+    '/api/articles/:id/toggle-publish': {
+      'post': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/articles/[id]/toggle-publish.post').default>>>>
     }
     '/api/articles': {
       'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/articles/index.get').default>>>>
@@ -24,8 +30,20 @@ declare module "nitropack/types" {
     '/api/auth/login': {
       'post': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/auth/login.post').default>>>>
     }
+    '/api/auth/me': {
+      'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/auth/me.get').default>>>>
+    }
     '/api/auth/register': {
       'post': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/auth/register.post').default>>>>
+    }
+    '/api/categories/:id': {
+      'delete': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/categories/[id].delete').default>>>>
+      'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/categories/[id].get').default>>>>
+      'put': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/categories/[id].put').default>>>>
+    }
+    '/api/categories': {
+      'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/categories/index.get').default>>>>
+      'post': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/api/categories/index.post').default>>>>
     }
     '/__nuxt_error': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../node_modules/@nuxt/nitro-server/dist/runtime/handlers/renderer').default>>>>

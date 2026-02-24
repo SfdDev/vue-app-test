@@ -14,6 +14,7 @@ type HydrationStrategies = {
 type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
 
 
+export const CategoryFilter: typeof import("../src/components/CategoryFilter.vue")['default']
 export const UIPagination: typeof import("../src/components/UI/pagination.vue")['default']
 export const Footer: typeof import("../src/components/footer.vue")['default']
 export const Header: typeof import("../src/components/header.vue")['default']
@@ -41,6 +42,7 @@ export const Head: typeof import("../node_modules/nuxt/dist/head/runtime/compone
 export const Html: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Html']
 export const Body: typeof import("../node_modules/nuxt/dist/head/runtime/components")['Body']
 export const NuxtIsland: typeof import("../node_modules/nuxt/dist/app/components/nuxt-island")['default']
+export const LazyCategoryFilter: LazyComponent<typeof import("../src/components/CategoryFilter.vue")['default']>
 export const LazyUIPagination: LazyComponent<typeof import("../src/components/UI/pagination.vue")['default']>
 export const LazyFooter: LazyComponent<typeof import("../src/components/footer.vue")['default']>
 export const LazyHeader: LazyComponent<typeof import("../src/components/header.vue")['default']>

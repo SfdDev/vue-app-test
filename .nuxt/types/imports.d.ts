@@ -7,6 +7,8 @@ declare global {
   const addRouteMiddleware: typeof import('../../node_modules/nuxt/dist/app/composables/router').addRouteMiddleware
   const callOnce: typeof import('../../node_modules/nuxt/dist/app/composables/once').callOnce
   const cancelIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').cancelIdleCallback
+  const clearArticlesCache: typeof import('../../src/composables/useCachedArticles').clearArticlesCache
+  const clearArticlesListCache: typeof import('../../src/composables/useCachedArticles').clearArticlesListCache
   const clearError: typeof import('../../node_modules/nuxt/dist/app/composables/error').clearError
   const clearNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').clearNuxtData
   const clearNuxtState: typeof import('../../node_modules/nuxt/dist/app/composables/state').clearNuxtState
@@ -107,6 +109,9 @@ declare global {
   const useAuthForm: typeof import('../../src/composables/useAuthForm').useAuthForm
   const useBaseLinks: typeof import('../../src/utils/common').useBaseLinks
   const useBlog: typeof import('../../src/composables/useBlog').useBlog
+  const useCachedAdminArticles: typeof import('../../src/composables/useCachedArticles').useCachedAdminArticles
+  const useCachedArticle: typeof import('../../src/composables/useCachedArticles').useCachedArticle
+  const useCachedArticles: typeof import('../../src/composables/useCachedArticles').useCachedArticles
   const useChangePage: typeof import('../../src/utils/common').useChangePage
   const useCookie: typeof import('../../node_modules/nuxt/dist/app/composables/cookie').useCookie
   const useCssModule: typeof import('../../node_modules/vue').useCssModule
@@ -194,6 +199,12 @@ declare global {
   // @ts-ignore
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from '../../node_modules/vue'
   import('../../node_modules/vue')
+  // @ts-ignore
+  export type { Article, PaginationMeta, ArticlesResponse } from '../../src/composables/useCachedArticles'
+  import('../../src/composables/useCachedArticles')
+  // @ts-ignore
+  export type { NavLink, SocialIcon } from '../../src/utils/common'
+  import('../../src/utils/common')
 }
 // for vue template auto import
 import { UnwrapRef } from 'vue'
@@ -205,6 +216,8 @@ declare module 'vue' {
     readonly addRouteMiddleware: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['addRouteMiddleware']>
     readonly callOnce: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/once')['callOnce']>
     readonly cancelIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['cancelIdleCallback']>
+    readonly clearArticlesCache: UnwrapRef<typeof import('../../src/composables/useCachedArticles')['clearArticlesCache']>
+    readonly clearArticlesListCache: UnwrapRef<typeof import('../../src/composables/useCachedArticles')['clearArticlesListCache']>
     readonly clearError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['clearError']>
     readonly clearNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['clearNuxtData']>
     readonly clearNuxtState: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/state')['clearNuxtState']>
@@ -305,6 +318,9 @@ declare module 'vue' {
     readonly useAuthForm: UnwrapRef<typeof import('../../src/composables/useAuthForm')['useAuthForm']>
     readonly useBaseLinks: UnwrapRef<typeof import('../../src/utils/common')['useBaseLinks']>
     readonly useBlog: UnwrapRef<typeof import('../../src/composables/useBlog')['useBlog']>
+    readonly useCachedAdminArticles: UnwrapRef<typeof import('../../src/composables/useCachedArticles')['useCachedAdminArticles']>
+    readonly useCachedArticle: UnwrapRef<typeof import('../../src/composables/useCachedArticles')['useCachedArticle']>
+    readonly useCachedArticles: UnwrapRef<typeof import('../../src/composables/useCachedArticles')['useCachedArticles']>
     readonly useChangePage: UnwrapRef<typeof import('../../src/utils/common')['useChangePage']>
     readonly useCookie: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/cookie')['useCookie']>
     readonly useCssModule: UnwrapRef<typeof import('../../node_modules/vue')['useCssModule']>

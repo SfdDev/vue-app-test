@@ -14,6 +14,7 @@ type HydrationStrategies = {
 type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
 
 interface _GlobalComponents {
+  CategoryFilter: typeof import("../../src/components/CategoryFilter.vue")['default']
   UIPagination: typeof import("../../src/components/UI/pagination.vue")['default']
   Footer: typeof import("../../src/components/footer.vue")['default']
   Header: typeof import("../../src/components/header.vue")['default']
@@ -41,6 +42,7 @@ interface _GlobalComponents {
   Html: typeof import("../../node_modules/nuxt/dist/head/runtime/components")['Html']
   Body: typeof import("../../node_modules/nuxt/dist/head/runtime/components")['Body']
   NuxtIsland: typeof import("../../node_modules/nuxt/dist/app/components/nuxt-island")['default']
+  LazyCategoryFilter: LazyComponent<typeof import("../../src/components/CategoryFilter.vue")['default']>
   LazyUIPagination: LazyComponent<typeof import("../../src/components/UI/pagination.vue")['default']>
   LazyFooter: LazyComponent<typeof import("../../src/components/footer.vue")['default']>
   LazyHeader: LazyComponent<typeof import("../../src/components/header.vue")['default']>
