@@ -1,0 +1,49 @@
+.blog {
+
+
+  .blog__content {
+    padding: 25px 0;
+
+    .card {
+      cursor: pointer;
+      transition: transform 0.2s;
+      background-color: #f5deb3;
+
+
+      &:hover {
+        transform: scale(1.03);
+
+        & .btn {
+          background-color: red;
+          color: color(black);
+
+          &  span {
+            transform: scale(1.05);
+          }
+        }
+      }
+
+      &:active {
+        & .btn {
+          background-color: color(dark);
+          color: wheat;
+          transform: translate(0em, 0.75em);
+
+
+          &  span {
+            transform: scale(1.1);
+          }
+
+
+          &::before {
+            box-shadow: unset;
+            //box-shadow: 0 0 0 2px #FFF, 0 0 #FFF;
+            transform: translate3d(0, 0, -1em);
+            border: none;
+          }
+        }
+      }
+    }
+  }
+}
+

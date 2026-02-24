@@ -1,0 +1,1 @@
+export { default } from "file:///home/dimas/projects/vue-app-test/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs"

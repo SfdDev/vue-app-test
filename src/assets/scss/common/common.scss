@@ -1,0 +1,40 @@
+html {
+  //font-size: clamp(0.73rem, 2vw, 2rem) !important;
+
+  @media  #{$min-xl} {
+    font-size: 2rem !important;
+  }
+
+  @media  #{$xl} {
+    font-size: 1.2rem !important;
+  }
+
+  @media  #{$lg} {
+    font-size: 0.73rem !important;
+  }
+}
+body {
+  min-width: 300px;
+  letter-spacing: 2px;
+}
+
+main {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hr-pixel {
+  border: 2px dashed white;
+  opacity: 0.1;
+  color: white;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.admin-panel {
+  background-color: red !important;
+  &:hover {
+    background-color: red !important;
+  }
+}

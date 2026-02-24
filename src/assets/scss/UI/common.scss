@@ -1,0 +1,41 @@
+$name-user__color: red;
+$name-user__color--xl: red;
+$name-user__background-color--xl: red;
+
+$hover--yellow__color: red;
+$hover--yellow__background-color: red;
+
+//логотип
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+//имя пользователя
+.name-user {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: bold;
+  color: $name-user__color;
+
+  &--xl {
+    color: red;
+    text-transform: capitalize;
+    font-size: clamp(1.5rem, 5vw, 4rem); // Минимум 2rem, идеально 5vw, максимум 4rem
+  }
+}
+
+//желтый ховер с черным текстом
+.hover--yellow {
+
+}
+
+//скеил по ховеру
+.scale-on-hover:hover span {
+  @media  #{$lg} {
+    transform: scale(1.1);
+  }
+
+
+}
