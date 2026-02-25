@@ -28,8 +28,19 @@ export default defineEventHandler(async (event) => {
       data: category
     };
   } catch (error: any) {
+    console.error('Error deleting category:', error);
+    
+    // Проверяем тип ошибки
     if (error.statusCode) {
       throw error;
+    }
+    
+    // Если это наша ошибка о статьях в категории, возвращаем 400
+    if (error.message === 'Нельзя удалить категорию, в которой есть статьи') {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Нельзя удалить категорию, в которой есть статьи'
+      });
     }
     
     throw createError({

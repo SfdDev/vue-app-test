@@ -7,6 +7,7 @@ const categoryModel = createCategoryModel({ pool });
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
+    console.log('Creating category with body:', body);
     
     // Валидация
     if (!body.name || body.name.trim().length === 0) {
@@ -29,10 +30,13 @@ export default defineEventHandler(async (event) => {
       description: body.description?.trim() || null
     });
 
+    console.log('Category created successfully:', category);
     return {
       data: category
     };
   } catch (error: any) {
+    console.error('Category creation error:', error);
+    
     if (error.code === '23505') { // Уникальное ограничение
       throw createError({
         statusCode: 400,

@@ -25,6 +25,15 @@ export default defineEventHandler(async (event) => {
   // ПОЛУЧАЕМ category_id ИЗ ФОРМЫ
   const categoryIdField = getField('category_id');
   const categoryId = categoryIdField ? parseInt(categoryIdField) : null;
+  
+  console.log('Creating article with data:', {
+    title,
+    content: content?.substring(0, 100) + '...',
+    categoryId,
+    categoryIdField,
+    isPublished,
+    userId: user.id
+  });
 
   const imagePart = formData.find((part) => part.name === 'image' && part.filename);
 
@@ -50,6 +59,7 @@ export default defineEventHandler(async (event) => {
       isPublished,  // ТЕПЕРЬ ПЕРЕДАЕМ ОПРЕДЕЛЕННУЮ ПЕРЕМЕННУЮ
       categoryId,  // ПЕРЕДАЕМ category_id
     );
+    console.log('Article created successfully:', article);
     return { data: { article } };
   } catch (error: any) {
     const statusCode = error.statusCode ?? 400;

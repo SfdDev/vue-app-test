@@ -11,6 +11,8 @@ export interface ArticleRecord {
   author_name?: string;
   category_name?: string;
   category_slug?: string;
+  category_description?: string;
+  category_image_url?: string;
 }
 
 export interface PaginatedArticles {
@@ -64,7 +66,7 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
         ORDER BY a.created_at DESC
         LIMIT $1 OFFSET $2
       `,
-      values: values,
+      values,
     };
     const result = await pool.query<ArticleRecord>(query);
     return result.rows;
@@ -100,18 +102,26 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
     return result.rows[0];
   }
 
-  async function getIndexById(id: number): Promise<number> {
+  async function getIndexById(id: number, categoryId?: number | null): Promise<number> {
+    let whereClause = 'WHERE is_published = true';
+    const values: any[] = [id];
+    
+    if (categoryId) {
+      whereClause += ' AND category_id = $2';
+      values.push(categoryId);
+    }
+    
     const query = {
       text: `
         SELECT row_number - 1 AS index
         FROM (
           SELECT id, ROW_NUMBER() OVER (ORDER BY created_at DESC) AS row_number
           FROM articles
-          WHERE is_published = true
+          ${whereClause}
         ) sub
         WHERE id = $1
       `,
-      values: [id],
+      values,
     };
     const result = await pool.query<{ index: number }>(query);
     if (result.rows.length === 0) {
@@ -120,12 +130,22 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
     return result.rows[0].index;
   }
 
-  async function getCount(): Promise<number> {
+  async function getCount(categoryId?: number | null): Promise<number> {
+    let queryText = 'SELECT COUNT(*) as total FROM articles WHERE is_published = true';
+    const params: any[] = [];
+    
+    if (categoryId) {
+      queryText += ' AND category_id = $1';
+      params.push(categoryId);
+    }
+    
     const query = {
-      text: 'SELECT COUNT(*) as total FROM articles WHERE is_published = true',
+      text: queryText,
+      ...(params.length > 0 && { values: params })
     };
-    const result = await pool.query<{ total: string }>(query);
-    return Number.parseInt(result.rows[0].total, 10);
+    
+    const result = await pool.query(query);
+    return parseInt(result.rows[0].total, 10);
   }
 
   async function getAllAdmin(page = 1, perPage = 6, categoryId: number | null = null): Promise<ArticleRecord[]> {
@@ -155,9 +175,18 @@ export function createArticleModel({ pool }: ArticleModelDependencies) {
     return result.rows;
   }
 
-  async function getCountAdmin(): Promise<number> {
+  async function getCountAdmin(categoryId?: number | null): Promise<number> {
+    let queryText = 'SELECT COUNT(*) as total FROM articles';
+    const params: any[] = [];
+    
+    if (categoryId) {
+      queryText += ' WHERE category_id = $1';
+      params.push(categoryId);
+    }
+    
     const query = {
-      text: 'SELECT COUNT(*) as total FROM articles',
+      text: queryText,
+      ...(params.length > 0 && { values: params })
     };
     const result = await pool.query<{ total: string }>(query);
     return Number.parseInt(result.rows[0].total, 10);

@@ -28,19 +28,19 @@ nav.nav {
     align-items: center;
 
 
-    & .v-btn {
+    // & .v-btn {
 
 
 
 
-      @media #{$sm} {
-        font-size: 0.8rem;
-      }
+    //   // @media #{$sm} {
+    //   //   font-size: 0.8rem;
+    //   // }
 
-      @media #{$xs} {
-        font-size: 0.75rem;
-      }
-    }
+    //   // @media #{$xs} {
+    //   //   font-size: 0.75rem;
+    //   // }
+    // }
   }
 }
 
@@ -58,9 +58,9 @@ nav.nav {
   &__scrim {
     cursor: pointer;
 
-    @media #{$min-md} {
-        display: none;
-    }
+    // @media #{$min-md} {
+    //     display: none;
+    // }
   }
 
   .social-icons {

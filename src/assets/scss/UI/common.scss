@@ -26,16 +26,16 @@ $hover--yellow__background-color: red;
   }
 }
 
-//желтый ховер с черным текстом
-.hover--yellow {
+// //желтый ховер с черным текстом
+// .hover--yellow {
 
-}
+// }
 
-//скеил по ховеру
-.scale-on-hover:hover span {
-  @media  #{$lg} {
-    transform: scale(1.1);
-  }
+// //скеил по ховеру
+// .scale-on-hover:hover span {
+//   @media  #{$lg} {
+//     transform: scale(1.1);
+//   }
 
 
-}
+// }

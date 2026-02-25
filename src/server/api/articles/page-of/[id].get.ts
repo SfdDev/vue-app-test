@@ -8,9 +8,10 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event);
   const perPage = Number.parseInt((query.per_page as string) ?? '6', 10) || 6;
+  const categoryId = query.category_id ? Number.parseInt(query.category_id as string, 10) : null;
 
   try {
-    return await getPageOfArticle(id, perPage);
+    return await getPageOfArticle(id, perPage, categoryId);
   } catch (error: any) {
     const statusCode = error.statusCode ?? 400;
     throw createError({

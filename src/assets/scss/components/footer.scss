@@ -37,9 +37,9 @@ $info__background-color: color(white);
 
   .social-icons {
     margin-left:  auto;
-    @media #{$xs} {
-      margin: auto;
-    }
+    // @media #{$xs} {
+    //   margin: auto;
+    // }
   }
 
   .name-user {

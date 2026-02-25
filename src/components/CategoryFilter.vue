@@ -32,6 +32,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRoute } from '#imports';
 import { useCategoryStore } from '@/store/categories';
 
 interface Category {
@@ -47,10 +48,17 @@ const emit = defineEmits<{
 const categoryStore = useCategoryStore();
 const categories = ref<Category[]>([]);
 const selectedCategoryId = ref<number | null>(null);
+const route = useRoute();
 
 onMounted(async () => {
   await categoryStore.loadCategories();
   categories.value = categoryStore.getCategories;
+  
+  // Синхронизируем с URL при загрузке
+  const categoryId = route.query.category_id ? Number.parseInt(route.query.category_id as string, 10) : null;
+  if (categoryId !== null) {
+    selectedCategoryId.value = categoryId;
+  }
 });
 
 function onCategoryChange() {

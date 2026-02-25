@@ -46,7 +46,7 @@ export const useCategoryStore = defineStore('category', {
       this.error = null;
       
       try {
-        const response = await $fetch('/api/categories') as { data: Category[] };
+        const response = await $fetch<{ data: Category[] }>('/api/categories');
         this.categories = response.data;
       } catch (error: any) {
         this.error = error.message || 'Ошибка при загрузке категорий';
@@ -61,10 +61,10 @@ export const useCategoryStore = defineStore('category', {
       this.error = null;
       
       try {
-        const response = await $fetch('/api/categories', {
+        const response = await $fetch<{ data: Category }>('/api/categories', {
           method: 'POST',
           body: categoryData
-        }) as { data: Category };
+        });
         
         this.categories.push(response.data);
         return response.data;
@@ -81,10 +81,10 @@ export const useCategoryStore = defineStore('category', {
       this.error = null;
       
       try {
-        const response = await $fetch(`/api/categories/${id}`, {
+        const response = await $fetch<{data: Category}>(`/api/categories/${id}`, {
           method: 'PUT',
           body: categoryData
-        }) as { data: Category };
+        });
         
         const index = this.categories.findIndex(cat => cat.id === id);
         if (index !== -1) {
@@ -105,9 +105,9 @@ export const useCategoryStore = defineStore('category', {
       this.error = null;
       
       try {
-        const response = await $fetch(`/api/categories/${id}`, {
+        const response = await $fetch<{data: Category}>(`/api/categories/${id}`, {
           method: 'DELETE'
-        }) as { data: Category };
+        });
         
         const index = this.categories.findIndex(cat => cat.id === id);
         if (index !== -1) {

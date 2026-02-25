@@ -3054,18 +3054,24 @@ function createArticleModel({ pool }) {
     const result = await pool.query(query);
     return result.rows[0];
   }
-  async function getIndexById(id) {
+  async function getIndexById(id, categoryId) {
+    let whereClause = "WHERE is_published = true";
+    const values = [id];
+    if (categoryId) {
+      whereClause += " AND category_id = $2";
+      values.push(categoryId);
+    }
     const query = {
       text: `
         SELECT row_number - 1 AS index
         FROM (
           SELECT id, ROW_NUMBER() OVER (ORDER BY created_at DESC) AS row_number
           FROM articles
-          WHERE is_published = true
+          ${whereClause}
         ) sub
         WHERE id = $1
       `,
-      values: [id]
+      values
     };
     const result = await pool.query(query);
     if (result.rows.length === 0) {
@@ -3073,12 +3079,19 @@ function createArticleModel({ pool }) {
     }
     return result.rows[0].index;
   }
-  async function getCount() {
+  async function getCount(categoryId) {
+    let queryText = "SELECT COUNT(*) as total FROM articles WHERE is_published = true";
+    const params = [];
+    if (categoryId) {
+      queryText += " AND category_id = $1";
+      params.push(categoryId);
+    }
     const query = {
-      text: "SELECT COUNT(*) as total FROM articles WHERE is_published = true"
+      text: queryText,
+      ...params.length > 0 && { values: params }
     };
     const result = await pool.query(query);
-    return Number.parseInt(result.rows[0].total, 10);
+    return parseInt(result.rows[0].total, 10);
   }
   async function getAllAdmin(page = 1, perPage = 6, categoryId = null) {
     const offset = (page - 1) * perPage;
@@ -3103,9 +3116,16 @@ function createArticleModel({ pool }) {
     const result = await pool.query(query);
     return result.rows;
   }
-  async function getCountAdmin() {
+  async function getCountAdmin(categoryId) {
+    let queryText = "SELECT COUNT(*) as total FROM articles";
+    const params = [];
+    if (categoryId) {
+      queryText += " WHERE category_id = $1";
+      params.push(categoryId);
+    }
     const query = {
-      text: "SELECT COUNT(*) as total FROM articles"
+      text: queryText,
+      ...params.length > 0 && { values: params }
     };
     const result = await pool.query(query);
     return Number.parseInt(result.rows[0].total, 10);
@@ -3168,7 +3188,7 @@ const pool$6 = getDbPool();
 const articleModel = createArticleModel({ pool: pool$6 });
 async function getArticles(page, perPage, categoryId) {
   const articles = await articleModel.getAll(page, perPage, categoryId);
-  const total = await articleModel.getCount();
+  const total = await articleModel.getCount(categoryId);
   const totalPages = Math.ceil(total / perPage);
   return {
     data: articles,
@@ -3182,7 +3202,7 @@ async function getArticles(page, perPage, categoryId) {
 }
 async function getAdminArticles(page, perPage, categoryId) {
   const articles = await articleModel.getAllAdmin(page, perPage, categoryId);
-  const total = await articleModel.getCountAdmin();
+  const total = await articleModel.getCountAdmin(categoryId);
   const totalPages = Math.ceil(total / perPage);
   return {
     data: articles,
@@ -3208,8 +3228,8 @@ async function getArticleByIdAdmin(id) {
   }
   return article;
 }
-async function getPageOfArticle(id, perPage) {
-  const index = await articleModel.getIndexById(id);
+async function getPageOfArticle(id, perPage, categoryId) {
+  const index = await articleModel.getIndexById(id, categoryId);
   const page = Math.floor(index / perPage) + 1;
   return { page };
 }
@@ -3318,14 +3338,35 @@ const _id__get$7 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty
 
 const index_get$4 = defineEventHandler(async (event) => {
   var _a, _b, _c;
-  requireAdmin(event);
+  const user = requireAdmin(event);
   const query = getQuery$1(event);
   const page = Number.parseInt((_a = query.page) != null ? _a : "1", 10) || 1;
   const perPage = Number.parseInt((_b = query.per_page) != null ? _b : "4", 10) || 4;
   const categoryId = query.category_id ? Number.parseInt(query.category_id, 10) : null;
+  console.log("Admin articles API called:", { page, perPage, categoryId, user: user.username });
   try {
-    return await getAdminArticles(page, perPage, categoryId);
+    const result = await getAdminArticles(page, perPage, categoryId);
+    console.log("Admin articles result:", {
+      articlesCount: result.data.length,
+      total: result.meta.total,
+      articles: result.data.map((a) => ({ id: a.id, title: a.title, category_id: a.category_id })),
+      requestedCategoryId: categoryId
+    });
+    if (categoryId === 7) {
+      console.log("DEBUG: Checking category 7 specifically");
+      const pool = getDbPool();
+      const directQuery = await pool.query(`
+        SELECT a.id, a.title, a.category_id, c.name as category_name
+        FROM articles a
+        LEFT JOIN categories c ON a.category_id = c.id
+        WHERE a.category_id = 7
+        ORDER BY a.created_at DESC
+      `);
+      console.log("Direct DB query for category 7:", directQuery.rows);
+    }
+    return result;
   } catch (error) {
+    console.error("Admin articles error:", error);
     throw createError({
       statusCode: 400,
       statusMessage: (_c = error.message) != null ? _c : "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0441\u0442\u0430\u0442\u0435\u0439"
@@ -3407,6 +3448,15 @@ const _id__put$2 = defineEventHandler(async (event) => {
   const isPublished = isPublishedField ? isPublishedField === "true" : void 0;
   const categoryIdField = getField("category_id");
   const categoryId = categoryIdField ? parseInt(categoryIdField) : void 0;
+  console.log("Editing article:", {
+    id,
+    title,
+    content,
+    categoryId,
+    categoryIdField,
+    isPublished,
+    user: user.username
+  });
   const imagePart = formData.find((part) => part.name === "image" && part.filename);
   let newImageUrl = null;
   if (imagePart && imagePart.filename && imagePart.data) {
@@ -3507,19 +3557,37 @@ const index_get$2 = defineEventHandler(async (event) => {
   const page = Number.parseInt((_a = query.page) != null ? _a : "1", 10) || 1;
   const perPage = Number.parseInt((_b = query.per_page) != null ? _b : "6", 10) || 6;
   const categoryId = query.category_id ? Number.parseInt(query.category_id, 10) : null;
+  console.log("Blog API called:", { page, perPage, categoryId });
   const cacheKey = `articles:${page}:${perPage}:${categoryId || "all"}`;
   try {
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log("Returning cached data for blog");
       return cached.data;
     }
     const result = await getArticles(page, perPage, categoryId);
+    console.log("Blog API result:", {
+      articlesCount: result.data.length,
+      total: result.meta.total,
+      totalPages: result.meta.total_pages,
+      categoryId,
+      articles: result.data.map((a) => ({
+        id: a.id,
+        title: a.title,
+        is_published: a.is_published,
+        category_id: a.category_id,
+        category_name: a.category_name,
+        category_slug: a.category_slug,
+        allKeys: Object.keys(a)
+      }))
+    });
     cache.set(cacheKey, {
       data: result,
       timestamp: Date.now()
     });
     return result;
   } catch (error) {
+    console.error("Blog API error:", error);
     throw createError({
       statusCode: 400,
       statusMessage: (_c = error.message) != null ? _c : "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u044F \u0441\u0442\u0430\u0442\u0435\u0439"
@@ -3549,6 +3617,14 @@ const index_post$2 = defineEventHandler(async (event) => {
   const isPublished = isPublishedField ? isPublishedField === "true" : true;
   const categoryIdField = getField("category_id");
   const categoryId = categoryIdField ? parseInt(categoryIdField) : null;
+  console.log("Creating article with data:", {
+    title,
+    content: (content == null ? void 0 : content.substring(0, 100)) + "...",
+    categoryId,
+    categoryIdField,
+    isPublished,
+    userId: user.id
+  });
   const imagePart = formData.find((part) => part.name === "image" && part.filename);
   let imageUrl = null;
   if (imagePart && imagePart.filename && imagePart.data) {
@@ -3571,6 +3647,7 @@ const index_post$2 = defineEventHandler(async (event) => {
       categoryId
       // ПЕРЕДАЕМ category_id
     );
+    console.log("Article created successfully:", article);
     return { data: { article } };
   } catch (error) {
     const statusCode = (_a = error.statusCode) != null ? _a : 400;
@@ -3594,8 +3671,9 @@ const _id__get$2 = defineEventHandler(async (event) => {
   }
   const query = getQuery$1(event);
   const perPage = Number.parseInt((_c = query.per_page) != null ? _c : "6", 10) || 6;
+  const categoryId = query.category_id ? Number.parseInt(query.category_id, 10) : null;
   try {
-    return await getPageOfArticle(id, perPage);
+    return await getPageOfArticle(id, perPage, categoryId);
   } catch (error) {
     const statusCode = (_d = error.statusCode) != null ? _d : 400;
     throw createError({
@@ -3910,8 +3988,15 @@ const _id__delete = defineEventHandler(async (event) => {
       data: category
     };
   } catch (error) {
+    console.error("Error deleting category:", error);
     if (error.statusCode) {
       throw error;
+    }
+    if (error.message === "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E, \u0432 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0435\u0441\u0442\u044C \u0441\u0442\u0430\u0442\u044C\u0438") {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "\u041D\u0435\u043B\u044C\u0437\u044F \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E, \u0432 \u043A\u043E\u0442\u043E\u0440\u043E\u0439 \u0435\u0441\u0442\u044C \u0441\u0442\u0430\u0442\u044C\u0438"
+      });
     }
     throw createError({
       statusCode: 500,
@@ -4030,10 +4115,12 @@ const categoryModel$1 = createCategoryModel({ pool: pool$1 });
 const index_get = defineEventHandler(async (event) => {
   try {
     const categories = await categoryModel$1.findAll();
+    console.log("All categories:", categories);
     return {
       data: categories
     };
   } catch (error) {
+    console.error("Categories error:", error);
     throw createError({
       statusCode: 500,
       statusMessage: "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u0438\u0438 \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u0439"
@@ -4052,6 +4139,7 @@ const index_post = defineEventHandler(async (event) => {
   var _a, _b;
   try {
     const body = await readBody(event);
+    console.log("Creating category with body:", body);
     if (!body.name || body.name.trim().length === 0) {
       throw createError({
         statusCode: 400,
@@ -4069,10 +4157,12 @@ const index_post = defineEventHandler(async (event) => {
       slug: (_a = body.slug) == null ? void 0 : _a.trim(),
       description: ((_b = body.description) == null ? void 0 : _b.trim()) || null
     });
+    console.log("Category created successfully:", category);
     return {
       data: category
     };
   } catch (error) {
+    console.error("Category creation error:", error);
     if (error.code === "23505") {
       throw createError({
         statusCode: 400,

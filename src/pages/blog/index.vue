@@ -4,18 +4,63 @@ import Pagination from '@/components/UI/pagination.vue';
 import CategoryFilter from '@/components/CategoryFilter.vue';
 import { formatDate, getFullImageUrl } from '@/utils/common';
 import { useBlog } from '@/composables/useBlog';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
+import { useRouter, useRoute } from '#imports';
 
 const { articles, pagination, loadArticles } = useBlog(6, '/blog');
 const selectedCategory = ref<number | null>(null);
+const router = useRouter();
+const route = useRoute();
 
-// Следим за изменением категории и перезагружаем статьи
-watch(selectedCategory, async (newCategory) => {
-  await loadArticles(1, newCategory);
+// Синхронизируем категорию с URL при загрузке
+onMounted(async () => {
+  const categoryId = route.query.category_id ? Number.parseInt(route.query.category_id as string, 10) : null;
+  const page = Number.parseInt((route.query.page as string) || '1', 10) || 1;
+  
+  selectedCategory.value = categoryId;
+  await loadArticles(page, categoryId);
 });
 
 function onCategoryChanged(categoryId: number | null) {
   selectedCategory.value = categoryId;
+  
+  // При смене категории всегда переходим на страницу 1 и загружаем статьи
+  const query: any = { page: '1' };
+  if (categoryId) {
+    query.category_id = categoryId.toString();
+  }
+  router.push({ path: '/blog', query });
+  
+  // Загружаем статьи для новой категории
+  loadArticles(1, categoryId);
+}
+
+async function onPageChange(page: number) {
+  // Обновляем URL, всегда включая page параметр
+  const query: any = { page: page.toString() };
+  if (selectedCategory.value) {
+    query.category_id = selectedCategory.value.toString();
+  }
+  await router.push({ path: '/blog', query });
+  
+  // Загружаем статьи напрямую
+  await loadArticles(page, selectedCategory.value);
+}
+
+function getArticleUrl(article: any) {
+  const baseUrl = `/blog/${article.category_slug || 'bez-kategorii'}/${article.id}`;
+  
+  // Если есть фильтр категории, сохраняем состояние в sessionStorage
+  if (selectedCategory.value) {
+    sessionStorage.setItem('blogReferrer', JSON.stringify({
+      category_id: selectedCategory.value,
+      page: pagination.value.currentPage
+    }));
+  } else {
+    sessionStorage.removeItem('blogReferrer');
+  }
+  
+  return baseUrl;
 }
 </script>
 
@@ -30,7 +75,7 @@ function onCategoryChanged(categoryId: number | null) {
           :key="article.id"
           class="col-12 col-sm-6 col-lg-4"
         >
-          <article class="card" @click="$router.push(`/blog/${article.id}`)">
+          <article class="card" @click="$router.push(getArticleUrl(article))">
             <img
               class="card__image"
               :src="getFullImageUrl(article.image_url)"
@@ -62,7 +107,7 @@ function onCategoryChanged(categoryId: number | null) {
                 <button
                   class="btn"
                   type="button"
-                  @click.stop="$router.push(`/blog/${article.id}`)"
+                  @click.stop="$router.push(getArticleUrl(article))"
                 >
                   Читать дальше
                 </button>
@@ -75,7 +120,7 @@ function onCategoryChanged(categoryId: number | null) {
       <Pagination
         :total-pages="pagination.totalPages"
         :model-value="pagination.currentPage"
-        @update:model-value="(page) => pagination.currentPage = page"
+        @update:model-value="onPageChange"
       />
     </div>
   </div>
@@ -86,6 +131,17 @@ function onCategoryChanged(categoryId: number | null) {
   background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('/image/2wq.webp');
   background-position: center;
   background-size: cover;
+}
+
+.category-link {
+  color: #1976d2;
+  text-decoration: none;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: #1565c0;
+    text-decoration: underline;
+  }
 }
 </style>
 

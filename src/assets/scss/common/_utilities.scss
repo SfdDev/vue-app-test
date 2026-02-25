@@ -1,0 +1,109 @@
+@use './config' as config;
+@use 'sass:string';
+
+// Утилиты
+$utilities: (
+  display: (
+    none: none,
+    block: block,
+    flex: flex,
+    inline: inline,
+    inline-block: inline-block,
+    inline-flex: inline-flex
+  ),
+  flex-direction: (
+    row: row,
+    column: column,
+    row-reverse: row-reverse,
+    column-reverse: column-reverse
+  ),
+  justify-content: (
+    start: flex-start,
+    end: flex-end,
+    center: center,
+    between: space-between,
+    around: space-around,
+    evenly: space-evenly
+  ),
+  align-items: (
+    start: flex-start,
+    end: flex-end,
+    center: center,
+    baseline: baseline,
+    stretch: stretch
+  ),
+  text-align: (
+    left: left,
+    center: center,
+    right: right,
+    justify: justify
+  ),
+  text-transform: (
+    lowercase: lowercase,
+    uppercase: uppercase,
+    capitalize: capitalize,
+    none: none
+  ),
+  font-weight: (
+    light: 300,
+    normal: 400,
+    medium: 500,
+    semibold: 600,
+    bold: 700,
+    extrabold: 800
+  )
+);
+
+// Генерация простых утилит
+@each $property, $map in $utilities {
+  @each $key, $value in $map {
+    .#{$property}-#{$key} {
+      #{$property}: $value !important;
+    }
+  }
+}
+
+// Специальные утилиты для отступов
+$spacing-utilities: (
+  margin: (
+    directions: (
+      t: top,
+      r: right,
+      b: bottom,
+      l: left,
+      x: (left, right),
+      y: (top, bottom)
+    ),
+    values: map-get(config.$config, spacing)
+  ),
+  padding: (
+    directions: (
+      t: top,
+      r: right,
+      b: bottom,
+      l: left,
+      x: (left, right),
+      y: (top, bottom)
+    ),
+    values: map-get(config.$config, spacing)
+  )
+);
+
+@each $property, $config in $spacing-utilities {
+  $directions: map-get($config, directions);
+  $values: map-get($config, values);
+
+  @each $dir-key, $dir-value in $directions {
+    @each $size-key, $size-value in $values {
+      .#{string.slice($property, 1, 1)}#{$dir-key}-#{$size-key} {
+        @if type-of($dir-value) == 'list' {
+          @each $d in $dir-value {
+            #{$property}-#{$d}: $size-value !important;
+          }
+        } @else {
+          #{$property}-#{$dir-value}: $size-value !important;
+        }
+      }
+    }
+  }
+}

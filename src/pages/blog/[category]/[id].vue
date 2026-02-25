@@ -9,6 +9,7 @@ const route = useRoute();
 const router = useRouter();
 
 const loading = ref(true);
+const hadCategoryFilter = ref(false);
 
 const currentId = computed(() => Number(route.params.id));
 const article = computed(() => articlesStore.article);
@@ -30,15 +31,42 @@ const canGoNext = computed(() => {
 
 async function loadPageForArticle(id: number) {
   if (!id || Number.isNaN(id)) return;
+  
+  // Сначала загружаем статью чтобы узнать ее категорию
+  await articlesStore.loadArticleById(id);
+  const currentArticle = articlesStore.article;
+  
+  if (!currentArticle) return;
+  
   const { articlesPerPage } = articlesStore.pagination;
+  const categoryId = currentArticle.category_id;
 
   const response = await $fetch<{ page: number }>(`/api/articles/page-of/${id}`, {
-    query: { per_page: articlesPerPage },
+    query: { per_page: articlesPerPage, category_id: categoryId },
   });
   const page = response.page;
-  articlesStore.setOriginPage(page);
+  
+  // Читаем состояние из sessionStorage
+  const referrerData = sessionStorage.getItem('blogReferrer');
+  let hadFilter = false;
+  let originPageToSave = page;
+  
+  if (referrerData) {
+    try {
+      const referrer = JSON.parse(referrerData);
+      hadFilter = referrer.category_id !== null;
+      originPageToSave = hadFilter ? referrer.page : page;
+    } catch (e) {
+      console.error('Error parsing referrer data:', e);
+    }
+    // Очищаем sessionStorage после использования
+    sessionStorage.removeItem('blogReferrer');
+  }
+  
+  hadCategoryFilter.value = hadFilter;
+  articlesStore.setOriginPage(originPageToSave);
 
-  await articlesStore.loadArticles(page, articlesPerPage);
+  await articlesStore.loadArticles(page, articlesPerPage, categoryId);
   await articlesStore.loadArticleById(id);
 }
 
@@ -50,7 +78,7 @@ async function goToPrevious() {
 
   if (idx > 0) {
     const prevArticle = articles[idx - 1];
-    await router.push(`/blog/${prevArticle.id}`);
+    await router.push(`/blog/${prevArticle.category_slug || 'bez-kategorii'}/${prevArticle.id}`);
     return;
   }
 
@@ -59,8 +87,7 @@ async function goToPrevious() {
     await articlesStore.loadArticles(prevPage, pagination.articlesPerPage);
     if (articlesStore.articles.length) {
       const lastArticle = articlesStore.articles[articlesStore.articles.length - 1];
-      await articlesStore.loadArticleById(lastArticle.id);
-      await router.push(`/blog/${lastArticle.id}`);
+      await router.push(`/blog/${lastArticle.category_slug || 'bez-kategorii'}/${lastArticle.id}`);
     }
   }
 }
@@ -73,28 +100,39 @@ async function goToNext() {
 
   if (idx < articles.length - 1) {
     const nextArticle = articles[idx + 1];
-    await router.push(`/blog/${nextArticle.id}`);
-    return;
-  }
-
-  if (pagination.currentPage < pagination.totalPages) {
+    await router.push(`/blog/${nextArticle.category_slug || 'bez-kategorii'}/${nextArticle.id}`);
+  } else if (pagination.currentPage < pagination.totalPages) {
     const nextPage = pagination.currentPage + 1;
-    await articlesStore.loadArticles(nextPage, pagination.articlesPerPage);
+    await articlesStore.loadArticles(nextPage);
     if (articlesStore.articles.length) {
       const firstArticle = articlesStore.articles[0];
-      await articlesStore.loadArticleById(firstArticle.id);
-      await router.push(`/blog/${firstArticle.id}`);
+      await router.push(`/blog/${firstArticle.category_slug || 'bez-kategorii'}/${firstArticle.id}`);
     }
   }
 }
 
 function goBack() {
   const page = articlesStore.originPage ?? 1;
-  if (page === 1) {
-    router.push('/blog');
-  } else {
-    router.push(`/blog?page=${page}`);
+  const currentArticle = articlesStore.article;
+  const categoryId = currentArticle?.category_id;
+  
+  let url = '/blog';
+  const query: any = {};
+  
+  if (page > 1) {
+    query.page = page.toString();
   }
+  
+  // Добавляем категорию только если пользователь пришел из отфильтрованного списка
+  if (hadCategoryFilter.value && categoryId) {
+    query.category_id = categoryId.toString();
+  }
+  
+  if (Object.keys(query).length > 0) {
+    url += '?' + new URLSearchParams(query).toString();
+  }
+  
+  router.push(url);
 }
 
 onMounted(async () => {
@@ -128,6 +166,14 @@ watch(
             </div>
             <div class="d-flex align-center">
               <span>Опубликовано: {{ formatDate(article.created_at) }}</span>
+            </div>
+            <div v-if="article.category_name" class="d-flex align-center">
+              <NuxtLink 
+                :to="`/blog?category_id=${article.category_id}`" 
+                class="category-link"
+              >
+                Категория: {{ article.category_name }}
+              </NuxtLink>
             </div>
           </div>
 
@@ -207,6 +253,17 @@ watch(
 .article-image {
   border-radius: 4px;
   margin: 16px 0;
+}
+
+.category-link {
+  color: #1976d2;
+  text-decoration: none;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: #1565c0;
+    text-decoration: underline;
+  }
 }
 
 .btn--link {

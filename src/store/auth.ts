@@ -24,8 +24,12 @@ export const useAuthStore = defineStore('auth', {
     initializeAuth() {
       if (process.client) {
         const token = localStorage.getItem('token');
+        console.log('initializeAuth: token from localStorage:', token);
         if (token) {
           this.token = token;
+          console.log('initializeAuth: token set to store');
+        } else {
+          console.log('initializeAuth: no token found in localStorage');
         }
       }
     },
@@ -94,6 +98,12 @@ export const useAuthStore = defineStore('auth', {
         if (response.token) {
           this.token = response.token;
           this.user = response.user;
+          
+          // Сохраняем токен в localStorage
+          if (process.client) {
+            localStorage.setItem('token', response.token);
+            console.log('Token saved to localStorage:', response.token);
+          }
         }
         
         this.loading = false;

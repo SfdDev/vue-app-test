@@ -172,6 +172,11 @@ function handleFileChange(event: Event) {
 async function saveArticle() {
   try {
     const articleData = { ...currentArticle.value };
+    console.log('saveArticle called with currentArticle:', currentArticle.value);
+    console.log('currentArticle.category_id:', currentArticle.value.category_id);
+    console.log('articleData after spread:', articleData);
+    console.log('articleData.category_id:', articleData.category_id);
+    
     if (!articleData.title || !articleData.content) {
       throw new Error('Заголовок и контент обязательны');
     }
@@ -183,6 +188,20 @@ async function saveArticle() {
     formData.append('title', articleData.title);
     formData.append('content', articleData.content);
     formData.append('is_published', String(articleData.is_published));
+    
+    // Добавляем category_id
+    if (articleData.category_id) {
+      formData.append('category_id', String(articleData.category_id));
+      console.log('Added category_id to FormData:', articleData.category_id);
+    } else {
+      console.log('No category_id to add to FormData');
+    }
+    
+    // Логируем все FormData для отладки
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
 
     if (articleData.file) {
       formData.append('image', articleData.file);
@@ -198,10 +217,12 @@ async function saveArticle() {
         content: articleData.content,
         image_url: articleData.image_url || null,
         file: articleData.file || undefined,
+        category_id: articleData.category_id,
       });
       await articlesStore.loadAdminArticles(
         articlesStore.pagination.currentPage,
         articlesStore.pagination.articlesPerPage,
+        selectedFilterCategory.value,
       );
     } else {
       await articlesStore.addArticle({
@@ -209,8 +230,9 @@ async function saveArticle() {
         content: articleData.content,
         file: articleData.file || undefined,
         image_url: articleData.image_url || undefined,
+        category_id: articleData.category_id,
       });
-      await articlesStore.loadAdminArticles(1, articlesStore.pagination.articlesPerPage || 4);
+      await articlesStore.loadAdminArticles(1, articlesStore.pagination.articlesPerPage || 4, selectedFilterCategory.value);
     }
 
     resetForm();
@@ -290,13 +312,34 @@ async function changePage(page: number) {
 }
 
 async function loadFilteredArticles() {
-  const page = Number.parseInt((route.query.page as string) || '1', 10) || 1;
+  // Всегда начинаем с первой страницы при изменении фильтра
+  const page = 1;
   console.log('Loading filtered articles:', { page, categoryId: selectedFilterCategory.value });
+  
+  // Обновляем URL с текущим фильтром
+  await router.push({
+    path: route.path,
+    query: {
+      ...route.query,
+      category_id: selectedFilterCategory.value || undefined,
+      page: '1' // Сбрасываем на первую страницу при изменении фильтра
+    }
+  });
+  
   await articlesStore.loadAdminArticles(page, 4, selectedFilterCategory.value);
 }
 
 function clearCategoryFilter() {
   selectedFilterCategory.value = null;
+  // Обновляем URL убирая category_id
+  router.push({
+    path: route.path,
+    query: {
+      ...route.query,
+      category_id: undefined,
+      page: '1'
+    }
+  });
 }
 
 function switchToCategoriesTab() {
@@ -317,14 +360,37 @@ async function switchToArticlesTab() {
 
 onMounted(async () => {
   console.log('Admin page mounted');
-  console.log('Auth state:', {
+  
+  // Даем время плагину авторизации загрузиться
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  console.log('Auth state after delay:', {
     isAuthenticated: authStore.isAuthenticated,
     isAdmin: authStore.isAdmin,
     user: authStore.user,
     token: authStore.token
   });
   
-  // Проверяем авторизацию и права админа
+  // Если нет токена, выходим
+  if (!authStore.token) {
+    console.log('No token found, redirecting to auth');
+    router.push('/auth');
+    return;
+  }
+  
+  // Если пользователь не загружен, пробуем проверить авторизацию
+  if (!authStore.user) {
+    console.log('User not loaded, trying checkAuth');
+    try {
+      await authStore.checkAuth();
+    } catch (error) {
+      console.error('checkAuth failed:', error);
+      router.push('/auth');
+      return;
+    }
+  }
+  
+  // Финальная проверка
   if (!authStore.isAuthenticated || !authStore.isAdmin) {
     console.log('Redirecting to home - not authenticated or not admin');
     router.push('/');
@@ -565,7 +631,7 @@ watch(
             </div>
             <div class="field">
               <label class="label">Категория</label>
-              <select v-model="currentArticle.category_id" class="select">
+              <select v-model="currentArticle.category_id" class="select" @change="console.log('Category changed:', currentArticle.category_id)">
                 <option :value="null">Без категории</option>
                 <option 
                   v-for="category in categories" 

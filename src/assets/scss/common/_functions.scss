@@ -1,0 +1,43 @@
+@use './config' as config;
+
+// Функции доступа к конфигурации
+@function color($key) {
+  @return map-get(map-get(config.$config, colors), $key);
+}
+
+@function font($key) {
+  @return map-get(map-get(config.$config, fonts), $key);
+}
+
+@function breakpoint($key) {
+  @return map-get(map-get(config.$config, breakpoints), $key);
+}
+
+@function spacing($key) {
+  @return map-get(map-get(config.$config, spacing), $key);
+}
+
+@function border-radius($key) {
+  @return map-get(map-get(map-get(config.$config, borders), radius), $key);
+}
+
+@function shadow($key) {
+  @return map-get(map-get(config.$config, shadows), $key);
+}
+
+@function transition($key) {
+  @return map-get(map-get(config.$config, transitions), $key);
+}
+
+// Функция для глубокого мерджа maps
+@function deep-merge($parent, $child) {
+  $result: $parent;
+  @each $key, $value in $child {
+    @if not map-has-key($parent, $key) {
+      $result: map-merge($result, ($key: $value));
+    } @else {
+      $result: map-merge($result, ($key: deep-merge(map-get($parent, $key), map-get($child, $key))));
+    }
+  }
+  @return $result;
+}

@@ -7,9 +7,9 @@ $desc__color: color(white);
   background-position: center;
   background-size: cover;
 
-  @media #{$sm} {
-    padding: 50px 0;
-  }
+  // @media #{$sm} {
+  //   padding: 50px 0;
+  // }
 
   &__content {
     display: flex;

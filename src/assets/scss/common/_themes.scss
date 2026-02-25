@@ -1,0 +1,53 @@
+@use './functions' as fn;
+
+// Темы
+$themes: (
+  light: (
+    background: fn.color(white),
+    text: fn.color(dark),
+    surface: fn.color(light),
+    primary: fn.color(primary),
+    secondary: fn.color(secondary)
+  ),
+  dark: (
+    background: fn.color(dark),
+    text: fn.color(white),
+    surface: lighten(fn.color(dark), 10%),
+    primary: lighten(fn.color(primary), 10%),
+    secondary: lighten(fn.color(secondary), 10%)
+  )
+);
+
+// Миксин для применения тем
+@mixin theme($name, $theme-map) {
+  .theme-#{$name} {
+    background-color: map-get($theme-map, background);
+    color: map-get($theme-map, text);
+
+    .card {
+      background-color: map-get($theme-map, surface);
+    }
+
+    a {
+      color: map-get($theme-map, primary);
+
+      &:hover {
+        color: darken(map-get($theme-map, primary), 10%);
+      }
+    }
+
+    .button--primary {
+      background-color: map-get($theme-map, primary);
+      color: fn.color(white);
+
+      &:hover {
+        background-color: darken(map-get($theme-map, primary), 10%);
+      }
+    }
+  }
+}
+
+// Генерация тем
+@each $theme-name, $theme-map in $themes {
+  @include theme($theme-name, $theme-map);
+}

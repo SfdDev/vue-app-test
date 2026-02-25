@@ -1,0 +1,123 @@
+@use './functions' as fn;
+
+// Компоненты
+$components: (
+  button: (
+    display: inline-flex,
+    align-items: center,
+    justify-content: center,
+    padding: fn.spacing(sm) fn.spacing(md),
+    border: none,
+    border-radius: fn.border-radius(sm),
+    font-family: fn.font(main),
+    font-weight: 600,
+    cursor: pointer,
+    transition: all fn.transition(fast),
+    variants: (
+      primary: (
+        background-color: fn.color(primary),
+        color: fn.color(white),
+        hover: (
+          background-color: darken(fn.color(primary), 10%)
+        )
+      ),
+      secondary: (
+        background-color: fn.color(secondary),
+        color: fn.color(white),
+        hover: (
+          background-color: darken(fn.color(secondary), 10%)
+        )
+      ),
+      outline: (
+        background-color: transparent,
+        color: fn.color(primary),
+        border: 1px solid fn.color(primary),
+        hover: (
+          background-color: fn.color(primary),
+          color: fn.color(white)
+        )
+      )
+    ),
+    sizes: (
+      sm: (
+        padding: fn.spacing(xs) fn.spacing(sm),
+        font-size: 0.875rem
+      ),
+      lg: (
+        padding: fn.spacing(md) fn.spacing(lg),
+        font-size: 1.125rem
+      )
+    )
+  ),
+  card: (
+    background-color: fn.color(white),
+    border-radius: fn.border-radius(md),
+    box-shadow: fn.shadow(sm),
+    overflow: hidden,
+    transition: box-shadow fn.transition(fast),
+    hover: (
+      box-shadow: fn.shadow(md)
+    ),
+    variants: (
+      bordered: (
+        border: 1px solid darken(fn.color(light), 10%)
+      )
+    )
+  )
+);
+
+// Миксин для генерации компонентов
+@mixin generate-component($name, $component-map) {
+  .#{$name} {
+    @each $property, $value in $component-map {
+      @if $property != 'variants' and $property != 'sizes' and $property != 'hover' {
+        #{$property}: $value;
+      }
+    }
+
+    @if map-has-key($component-map, hover) {
+      &:hover {
+        @each $property, $value in map-get($component-map, hover) {
+          #{$property}: $value;
+        }
+      }
+    }
+
+    @if map-has-key($component-map, variants) {
+      $variants: map-get($component-map, variants);
+      @each $variant-name, $variant-props in $variants {
+        &--#{$variant-name} {
+          @each $property, $value in $variant-props {
+            @if $property != 'hover' {
+              #{$property}: $value;
+            }
+          }
+
+          @if map-has-key($variant-props, hover) {
+            &:hover {
+              @each $property, $value in map-get($variant-props, hover) {
+                #{$property}: $value;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    @if map-has-key($component-map, sizes) {
+      $sizes: map-get($component-map, sizes);
+      @each $size-name, $size-props in $sizes {
+        &--#{$size-name} {
+          @each $property, $value in $size-props {
+            #{$property}: $value;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Генерация компонентов
+@each $component-name, $component-map in $components {
+  @include generate-component($component-name, $component-map);
+}

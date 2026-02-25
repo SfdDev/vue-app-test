@@ -15,8 +15,8 @@ export interface Article {
   author_name?: string;
   is_published?: boolean;
   category_id?: number | null;
-  category_name?: string;
-  category_slug?: string;
+  category_name?: string | null;
+  category_slug?: string | null;
 }
 
 export interface PaginationMeta {
@@ -146,6 +146,8 @@ export const useArticlesStore = defineStore('articles', () => {
 
   const loadAdminArticles = async (page: number = 1, perPage: number = 4, categoryId?: number | null): Promise<Article[]> => {
     const cacheKey = `${perPage}_${page}_${categoryId || 'all'}`;
+    
+    console.log('loadAdminArticles called:', { page, perPage, categoryId, cacheKey });
 
     loading.value = true;
     error.value = null;
@@ -156,6 +158,8 @@ export const useArticlesStore = defineStore('articles', () => {
       if (categoryId) {
         query.category_id = categoryId;
       }
+      
+      console.log('Making request to /api/admin/articles with query:', query);
       
       const response = await $fetch<ArticlesResponse>(`/api/admin/articles`, {
         query: query,
@@ -204,8 +208,7 @@ export const useArticlesStore = defineStore('articles', () => {
     }
 
     try {
-      const response = await $fetch<{ data: Article }>(`/api/articles/${articleId}`);
-      const articleData = response.data;
+      const articleData = await $fetch<Article>(`/api/articles/${articleId}`);
 
       const newArticle: Article = {
         id: articleData.id,
@@ -217,6 +220,9 @@ export const useArticlesStore = defineStore('articles', () => {
         author_id: articleData.author_id,
         author_name: articleData.author_name,
         is_published: articleData.is_published,
+        category_id: articleData.category_id,
+        category_name: articleData.category_name || null,
+        category_slug: articleData.category_slug || null,
       };
 
       article.value = newArticle;
@@ -347,8 +353,12 @@ export const useArticlesStore = defineStore('articles', () => {
     error.value = null;
 
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       await $fetch(`/api/articles/${id}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: token ? `Bearer ${token}` : '',
+        },
       });
 
       // Удаляем статью из всех кэшей страниц

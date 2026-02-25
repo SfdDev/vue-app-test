@@ -1,0 +1,78 @@
+@use './functions' as fn;
+
+// Базовые стили
+$base: (
+  body: (
+    font-family: fn.font(main),
+    line-height: 1.5,
+    color: fn.color(black),
+    background-color: fn.color(white),
+    margin: 0,
+    padding: 0
+  ),
+  headings: (
+    font-family: fn.font(heading),
+    margin-top: 0,
+    margin-bottom: fn.spacing(md),
+    line-height: 1.2,
+    font-weight: 700,
+    color: fn.color(black)
+  ),
+  links: (
+    color: fn.color(primary),
+    text-decoration: none,
+    transition: color fn.transition(fast),
+    hover: (
+      color: darken(fn.color(primary), 10%),
+      text-decoration: underline
+    )
+  ),
+  paragraphs: (
+    margin-top: 0,
+    margin-bottom: fn.spacing(md)
+  ),
+  lists: (
+    margin-top: 0,
+    margin-bottom: fn.spacing(md),
+    padding-left: fn.spacing(lg)
+  )
+);
+
+// Применение базовых стилей
+body {
+  @each $property, $value in map-get($base, body) {
+    #{$property}: $value;
+  }
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @each $property, $value in map-get($base, headings) {
+    #{$property}: $value;
+  }
+}
+
+a {
+  @each $property, $value in map-get($base, links) {
+    @if $property != hover {
+      #{$property}: $value;
+    }
+  }
+
+  &:hover {
+    @each $property, $value in map-get(map-get($base, links), hover) {
+      #{$property}: $value;
+    }
+  }
+}
+
+p {
+  @each $property, $value in map-get($base, paragraphs) {
+    #{$property}: $value;
+  }
+}
+
+ul, ol {
+  @each $property, $value in map-get($base, lists) {
+    #{$property}: $value;
+  }
+}

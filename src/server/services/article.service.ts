@@ -8,7 +8,7 @@ const articleModel = createArticleModel({ pool });
 
 export async function getArticles(page: number, perPage: number, categoryId?: number | null) {
   const articles = await articleModel.getAll(page, perPage, categoryId);
-  const total = await articleModel.getCount();
+  const total = await articleModel.getCount(categoryId);
   const totalPages = Math.ceil(total / perPage);
 
   return {
@@ -24,7 +24,7 @@ export async function getArticles(page: number, perPage: number, categoryId?: nu
 
 export async function getAdminArticles(page: number, perPage: number, categoryId?: number | null) {
   const articles = await articleModel.getAllAdmin(page, perPage, categoryId);
-  const total = await articleModel.getCountAdmin();
+  const total = await articleModel.getCountAdmin(categoryId);
   const totalPages = Math.ceil(total / perPage);
 
   return {
@@ -54,8 +54,8 @@ export async function getArticleByIdAdmin(id: number) {
   return article;
 }
 
-export async function getPageOfArticle(id: number, perPage: number) {
-  const index = await articleModel.getIndexById(id);
+export async function getPageOfArticle(id: number, perPage: number, categoryId?: number | null) {
+  const index = await articleModel.getIndexById(id, categoryId);
   const page = Math.floor(index / perPage) + 1;
   return { page };
 }

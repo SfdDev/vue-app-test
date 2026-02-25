@@ -31,16 +31,6 @@ const pages = computed(() => {
 
 const handlePageChange = (page: number) => {
   emit('update:modelValue', page);
-  
-  // Обновляем URL после обновления данных
-  nextTick(() => {
-    const currentPath = route.path;
-    if (page === 1) {
-      router.push(currentPath);
-    } else {
-      router.push({ path: currentPath, query: { page: page.toString() } });
-    }
-  });
 };
 </script>
 

@@ -1,0 +1,87 @@
+@use './functions' as fn;
+
+// Макет
+$layout: (
+  container: (
+    width: 100%,
+    padding: 0 fn.spacing(md),
+    margin: 0 auto
+  ),
+  grid: (
+    columns: 12,
+    gutter: fn.spacing(md),
+    breakpoints: (
+      sm: fn.breakpoint(sm),
+      md: fn.breakpoint(md),
+      lg: fn.breakpoint(lg),
+      xl: fn.breakpoint(xl),
+      xxl: fn.breakpoint(xxl)
+    )
+  ),
+  section: (
+    padding: fn.spacing(xl) 0
+  )
+);
+
+// Максимальные ширины контейнера по брейкпоинтам
+$container-max-widths: (
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px
+);
+
+// Контейнер
+.container {
+  @each $property, $value in map-get($layout, container) {
+    #{$property}: $value;
+  }
+}
+
+// Responsive max-widths for container
+@each $breakpoint, $minWidth in map-get(map-get($layout, grid), breakpoints) {
+  @media (min-width: $minWidth) {
+    .container {
+      max-width: map-get($container-max-widths, $breakpoint);
+    }
+  }
+}
+
+// Секции
+.section {
+  @each $property, $value in map-get($layout, section) {
+    #{$property}: $value;
+  }
+}
+
+// Генерация сетки
+@mixin make-grid-columns($columns: map-get(map-get($layout, grid), columns), $gutter: map-get(map-get($layout, grid), gutter)) {
+  @for $i from 1 through $columns {
+    .col-#{$i} {
+      flex: 0 0 percentage($i / $columns);
+      max-width: percentage($i / $columns);
+      padding: 0 ($gutter / 2);
+    }
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 (-(map-get(map-get($layout, grid), gutter)) / 2);
+}
+
+@include make-grid-columns();
+
+// Адаптивная сетка
+@each $breakpoint, $width in map-get(map-get($layout, grid), breakpoints) {
+  @media (min-width: $width) {
+    @for $i from 1 through map-get(map-get($layout, grid), columns) {
+      .col-#{$breakpoint}-#{$i} {
+        flex: 0 0 percentage($i / map-get(map-get($layout, grid), columns));
+        max-width: percentage($i / map-get(map-get($layout, grid), columns));
+      }
+    }
+  }
+}

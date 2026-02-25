@@ -32,6 +32,16 @@ export default defineEventHandler(async (event) => {
   // Получаем category_id из формы
   const categoryIdField = getField('category_id');
   const categoryId = categoryIdField ? parseInt(categoryIdField) : undefined;
+  
+  console.log('Editing article:', {
+    id,
+    title,
+    content,
+    categoryId,
+    categoryIdField,
+    isPublished,
+    user: user.username
+  });
 
   const imagePart = formData.find((part) => part.name === 'image' && part.filename);
 

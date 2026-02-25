@@ -1,0 +1,54 @@
+// Конфигурация проекта
+$config: (
+  colors: (
+    primary: #3498db,
+    secondary: #2ecc71,
+    accent: #e74c3c,
+    light: #ecf0f1,
+    dark: #2c3e50,
+    white: #ffffff,
+    black: #000000
+  ),
+  fonts: (
+    main: '"Helvetica Neue", Arial, sans-serif',
+    heading: 'Georgia, serif',
+    mono: 'Monaco, Consolas, monospace'
+  ),
+  breakpoints: (
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1200px,
+    xxl: 1400px
+  ),
+  spacing: (
+    xs: 0.25rem,
+    sm: 0.5rem,
+    md: 1rem,
+    lg: 1.5rem,
+    xl: 2rem,
+    xxl: 3rem
+  ),
+  borders: (
+    radius: (
+      sm: 4px,
+      md: 8px,
+      lg: 12px,
+      circle: 50%
+    ),
+    width: (
+      thin: 1px,
+      thick: 2px
+    )
+  ),
+  shadows: (
+    sm: 0 1px 3px rgba(0,0,0,0.12),
+    md: 0 4px 6px rgba(0,0,0,0.1),
+    lg: 0 10px 15px rgba(0,0,0,0.1)
+  ),
+  transitions: (
+    fast: 0.15s,
+    normal: 0.3s,
+    slow: 0.5s
+  )
+);
