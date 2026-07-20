@@ -1,27 +1,28 @@
 <template>
-  <div class="category-filter mb-4">
+  <div class="category-filter">
     <div class="container">
-      <div class="d-flex align-center ga-4 flex-wrap">
-        <h3 class="text-h6 mb-0">Фильтр по категориям:</h3>
-        <select 
-          v-model="selectedCategoryId" 
-          @change="onCategoryChange"
+      <div class="category-filter__row">
+        <h3 class="category-filter__title">Фильтр по категориям:</h3>
+        <select
+          v-model="selectedCategoryId"
           class="select"
+          @change="onCategoryChange"
         >
           <option :value="null">Все категории</option>
-          <option 
-            v-for="category in categories" 
-            :key="category.id" 
+          <option :value="UNCATEGORIZED_CATEGORY_ID">{{ UNCATEGORIZED_CATEGORY_NAME }}</option>
+          <option
+            v-for="category in categories"
+            :key="category.id"
             :value="category.id"
           >
             {{ category.name }}
           </option>
         </select>
-        <button 
-          v-if="selectedCategoryId"
-          @click="clearFilter"
+        <button
+          v-if="selectedCategoryId != null"
           class="btn btn--outline"
           type="button"
+          @click="clearFilter"
         >
           Сбросить
         </button>
@@ -33,6 +34,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useCategoryStore } from '@/store/categories';
+import {
+  UNCATEGORIZED_CATEGORY_ID,
+  UNCATEGORIZED_CATEGORY_NAME,
+} from '@/shared/category-filter';
 
 interface Category {
   id: number;
@@ -54,6 +59,13 @@ onMounted(async () => {
 });
 
 function onCategoryChange() {
+  const value = selectedCategoryId.value;
+  // HTML select may coerce to string
+  const normalized =
+    value === null || value === ('' as unknown)
+      ? null
+      : Number(value);
+  selectedCategoryId.value = Number.isNaN(normalized as number) ? null : normalized;
   emit('categoryChanged', selectedCategoryId.value);
 }
 
@@ -70,5 +82,22 @@ function clearFilter() {
   border-radius: 8px;
   padding: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 1rem;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .select {
+    max-width: 280px;
+  }
 }
 </style>

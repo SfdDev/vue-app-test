@@ -27,27 +27,21 @@ export const formatDate = (date: string | Date | null | undefined): string => {
     });
 };
 
-//базовый урл (для Nuxt backend и статики)
-export const BASE_URL = '/_nuxt/public';
-
-//получение полного урл изображения
+//получение полного урл изображения (API уже отдаёт /images/...)
 export const getFullImageUrl = (imagePath: string | null | undefined): string => {
     if (!imagePath) return '';
-    // Если путь уже начинается с /, добавляем базовый URL
-    if (imagePath.startsWith('/')) {
-        return `${BASE_URL}${imagePath}`;
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/')) {
+        return imagePath;
     }
-    return `${BASE_URL}/${imagePath}`;
+    return `/${imagePath}`;
 };
 
 //получение имени пользователя
 export function useAuth() {
     const authStore = useAuthStore();
 
-    // Проверяем, авторизован ли пользователь
-    const isAuthenticated = computed(() => !!authStore.user);
-    // Имя текущего пользователя
-    const currentUsername = computed(() => (authStore as any).user?.username || '');
+    const isAuthenticated = computed(() => authStore.isAuthenticated);
+    const currentUsername = computed(() => authStore.user?.username || '');
 
     return {
         isAuthenticated,

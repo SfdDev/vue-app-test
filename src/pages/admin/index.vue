@@ -1,11 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
-import { useRoute, useRouter } from '#imports';
+import { ref, onMounted, watch, computed, nextTick } from 'vue';
+import { useRoute, useRouter, navigateTo } from '#imports';
 import { useAuthStore } from '@/store/auth';
 import { useArticlesStore } from '@/store/articles';
 import { useCategoryStore } from '@/store/categories';
 import { formatDate, getFullImageUrl } from '@/utils/common';
 import Pagination from '@/components/UI/pagination.vue';
+import {
+  UNCATEGORIZED_CATEGORY_ID,
+  UNCATEGORIZED_CATEGORY_NAME,
+  categoryFilterToSlug,
+  resolveCategoryFilterQuery,
+} from '@/shared/category-filter';
+
+interface CategoryArticle {
+  id: number;
+  title: string;
+  category_id?: number | null;
+  is_published?: boolean;
+}
 
 definePageMeta({
   ssr: false,
@@ -21,6 +34,8 @@ const isEditing = ref(false);
 const currentTab = ref<'articles' | 'categories'>('articles');
 const categoryDialogOpen = ref(false);
 const selectedFilterCategory = ref<number | null>(null);
+const categoryArticles = ref<CategoryArticle[]>([]);
+const categoryArticlesLoading = ref(false);
 const currentArticle = ref<{
   id: number | null;
   title: string;
@@ -56,9 +71,31 @@ const currentCategory = ref<{
 });
 
 // Используем articlesStore для работы со статьями
-const articles = computed(() => articlesStore.getCurrentArticles);
-const pagination = computed(() => articlesStore.pagination);
+const articles = computed(() => articlesStore.getAdminArticles);
+const pagination = computed(() => articlesStore.adminPagination);
 const categories = computed(() => categoryStore.getCategories);
+
+const categoriesWithArticles = computed(() => {
+  const groups = categories.value.map((category: { id: number; name: string; slug: string; description?: string | null }) => ({
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    description: category.description,
+    isVirtual: false,
+    articles: categoryArticles.value.filter((article: CategoryArticle) => article.category_id === category.id),
+  }));
+
+  groups.unshift({
+    id: UNCATEGORIZED_CATEGORY_ID,
+    name: UNCATEGORIZED_CATEGORY_NAME,
+    slug: 'uncategorized',
+    description: 'Статьи без выбранной категории',
+    isVirtual: true,
+    articles: categoryArticles.value.filter((article: CategoryArticle) => article.category_id == null),
+  });
+
+  return groups;
+});
 
 function resetForm() {
   if (currentArticle.value.imagePreview && currentArticle.value.imagePreview.startsWith('blob:')) {
@@ -125,6 +162,9 @@ async function saveCategory() {
     
     categoryDialogOpen.value = false;
     resetCategoryForm();
+    if (currentTab.value === 'categories') {
+      await loadCategoryArticles();
+    }
   } catch (error: any) {
     // eslint-disable-next-line no-alert
     alert(`Ошибка при сохранении категории: ${error.message}`);
@@ -135,6 +175,9 @@ async function deleteCategory(id: number) {
   if (confirm('Вы уверены, что хотите удалить эту категорию?')) {
     try {
       await categoryStore.deleteCategory(id);
+      if (currentTab.value === 'categories') {
+        await loadCategoryArticles();
+      }
     } catch (error: any) {
       // eslint-disable-next-line no-alert
       alert(`Ошибка при удалении категории: ${error.message}`);
@@ -169,6 +212,78 @@ function handleFileChange(event: Event) {
   }
 }
 
+const ADMIN_PER_PAGE = 4;
+/** Skip route watcher while we update URL ourselves */
+let routeSyncLock = false;
+
+function adminListQuery(page: number, categoryId: number | null = selectedFilterCategory.value) {
+  const query: Record<string, string> = {};
+  if (page > 1) query.page = String(page);
+  const slug = categoryFilterToSlug(categoryId, categoryStore.getCategories);
+  if (slug) query.category = slug;
+  return query;
+}
+
+function resolveAdminCategoryFromRoute(): number | null {
+  return resolveCategoryFilterQuery(
+    route.query.category,
+    categoryStore.getCategories,
+    route.query.category_id,
+  );
+}
+
+function normalizeFilterValue(raw: unknown): number | null {
+  if (raw === '' || raw === null || raw === undefined || raw === 'null') {
+    return null;
+  }
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function withRouteLock(fn: () => Promise<void>) {
+  routeSyncLock = true;
+  try {
+    await fn();
+  } finally {
+    await nextTick();
+    routeSyncLock = false;
+  }
+}
+
+async function writeAdminUrl(page: number, categoryId: number | null) {
+  const query = adminListQuery(page, categoryId);
+  const same =
+    String(route.query.page ?? '') === String(query.page ?? '') &&
+    String(route.query.category ?? '') === String(query.category ?? '');
+  if (same) return;
+
+  await withRouteLock(async () => {
+    await navigateTo({ path: '/admin', query }, { replace: true });
+  });
+}
+
+async function syncAdminRoute(page: number, categoryId: number | null = selectedFilterCategory.value) {
+  await writeAdminUrl(page, categoryId);
+}
+
+async function reloadAdminList(page = 1, categoryId: number | null = selectedFilterCategory.value) {
+  let targetPage = Math.max(1, page);
+  selectedFilterCategory.value = categoryId;
+
+  await articlesStore.loadAdminArticles(targetPage, ADMIN_PER_PAGE, categoryId);
+
+  const totalPages = articlesStore.adminPagination.totalPages;
+  if (totalPages > 0 && targetPage > totalPages) {
+    targetPage = totalPages;
+    await articlesStore.loadAdminArticles(targetPage, ADMIN_PER_PAGE, categoryId);
+  } else if (targetPage > 1 && articlesStore.adminArticles.length === 0) {
+    targetPage = 1;
+    await articlesStore.loadAdminArticles(1, ADMIN_PER_PAGE, categoryId);
+  }
+
+  await writeAdminUrl(targetPage, categoryId);
+}
+
 async function saveArticle() {
   try {
     const articleData = { ...currentArticle.value };
@@ -179,38 +294,27 @@ async function saveArticle() {
       throw new Error('Изображение обязательно для новой статьи');
     }
 
-    const formData = new FormData();
-    formData.append('title', articleData.title);
-    formData.append('content', articleData.content);
-    formData.append('is_published', String(articleData.is_published));
-
-    if (articleData.file) {
-      formData.append('image', articleData.file);
-    } else if (articleData.image_url) {
-      formData.append('image_url', articleData.image_url);
-    }
-
     if (isEditing.value && articleData.id != null) {
-      formData.append('id', String(articleData.id));
       await articlesStore.editArticle({
         id: articleData.id,
         title: articleData.title,
         content: articleData.content,
         image_url: articleData.image_url || null,
         file: articleData.file || undefined,
+        is_published: articleData.is_published,
+        category_id: articleData.category_id ?? null,
       });
-      await articlesStore.loadAdminArticles(
-        articlesStore.pagination.currentPage,
-        articlesStore.pagination.articlesPerPage,
-      );
+      await reloadAdminList(articlesStore.adminPagination.currentPage);
     } else {
       await articlesStore.addArticle({
         title: articleData.title,
         content: articleData.content,
         file: articleData.file || undefined,
         image_url: articleData.image_url || undefined,
+        is_published: articleData.is_published,
+        category_id: articleData.category_id ?? null,
       });
-      await articlesStore.loadAdminArticles(1, articlesStore.pagination.articlesPerPage || 4);
+      await reloadAdminList(1);
     }
 
     resetForm();
@@ -224,11 +328,11 @@ async function saveArticle() {
 async function deleteArticle(id: number) {
   try {
     await articlesStore.deleteArticle(id);
-    // Перезагружаем админские статьи после удаления
-    await articlesStore.loadAdminArticles(
-      articlesStore.pagination.currentPage,
-      articlesStore.pagination.articlesPerPage,
-    );
+    const page = articlesStore.adminPagination.currentPage;
+    await reloadAdminList(page);
+    if (!articlesStore.adminArticles.length && page > 1) {
+      await reloadAdminList(page - 1);
+    }
   } catch (error: any) {
     // eslint-disable-next-line no-alert
     alert(`Ошибка при удалении статьи: ${error.message}`);
@@ -238,11 +342,7 @@ async function deleteArticle(id: number) {
 async function togglePublishStatus(id: number) {
   try {
     await articlesStore.togglePublish(id);
-    // Перезагружаем админские статьи после изменения статуса
-    await articlesStore.loadAdminArticles(
-      articlesStore.pagination.currentPage,
-      articlesStore.pagination.articlesPerPage,
-    );
+    await reloadAdminList(articlesStore.adminPagination.currentPage);
   } catch (error: any) {
     // eslint-disable-next-line no-alert
     alert(`Ошибка при изменении статуса: ${error.message}`);
@@ -258,154 +358,155 @@ function clearAllCache() {
 
 async function changePage(page: number) {
   const pageNum = Number.parseInt(String(page), 10) || 1;
-  
-  if (pageNum < 1 || pageNum > articlesStore.pagination.totalPages) {
-    // eslint-disable-next-line no-console
+
+  if (pageNum < 1 || pageNum > articlesStore.adminPagination.totalPages) {
     console.warn('Некорректный номер страницы:', page);
     return;
   }
 
-  // Загружаем статьи с учетом фильтра категории
-  if (pageNum !== articlesStore.pagination.currentPage) {
-    try {
-      await articlesStore.loadAdminArticles(pageNum, 4, selectedFilterCategory.value);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Ошибка при загрузке страницы:', error);
-    }
+  await reloadAdminList(pageNum);
+}
+
+/** Category filter owns its own pagination — write URL first, then fetch */
+async function onCategoryFilterChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  const categoryId = normalizeFilterValue(target.value === '' ? null : target.value);
+  selectedFilterCategory.value = categoryId;
+
+  // Always rewrite URL on filter change (drops stale ?page=)
+  await writeAdminUrl(1, categoryId);
+  await articlesStore.loadAdminArticles(1, ADMIN_PER_PAGE, categoryId);
+}
+
+async function loadCategoryArticles() {
+  categoryArticlesLoading.value = true;
+  try {
+    const authStoreHeaders = useAuthStore().getAuthHeader();
+    const response = await $fetch<{ data: CategoryArticle[] }>('/api/admin/articles', {
+      query: { page: 1, per_page: 200 },
+      headers: authStoreHeaders,
+    });
+    categoryArticles.value = response.data;
+  } catch (error) {
+    console.error('Ошибка загрузки статей для категорий:', error);
+    categoryArticles.value = [];
+  } finally {
+    categoryArticlesLoading.value = false;
   }
-  
-  // Обновляем URL
-  if (pageNum === 1) {
-    const query = selectedFilterCategory.value 
-      ? { category_id: selectedFilterCategory.value.toString() }
-      : {};
-    router.push({ path: '/admin', query });
-  } else {
-    const query = selectedFilterCategory.value 
-      ? { page: pageNum.toString(), category_id: selectedFilterCategory.value.toString() }
-      : { page: pageNum.toString() };
-    router.push({ path: '/admin', query });
-  }
 }
 
-async function loadFilteredArticles() {
-  const page = Number.parseInt((route.query.page as string) || '1', 10) || 1;
-  console.log('Loading filtered articles:', { page, categoryId: selectedFilterCategory.value });
-  await articlesStore.loadAdminArticles(page, 4, selectedFilterCategory.value);
-}
-
-function clearCategoryFilter() {
-  selectedFilterCategory.value = null;
-}
-
-function switchToCategoriesTab() {
+async function switchToCategoriesTab() {
   currentTab.value = 'categories';
-  clearCategoryFilter();
-  // Загружаем категории при переключении
-  categoryStore.loadCategories();
-  // Загружаем статьи с учетом фильтра
-  loadFilteredArticles();
+  await categoryStore.loadCategories();
+  await loadCategoryArticles();
 }
 
 async function switchToArticlesTab() {
   currentTab.value = 'articles';
-  // Загружаем статьи без фильтра
   const page = Number.parseInt((route.query.page as string) || '1', 10) || 1;
-  await articlesStore.loadAdminArticles(page, 4);
+  const categoryId = resolveAdminCategoryFromRoute();
+  selectedFilterCategory.value = categoryId;
+  await articlesStore.loadAdminArticles(page, ADMIN_PER_PAGE, categoryId);
 }
 
 onMounted(async () => {
-  console.log('Admin page mounted');
-  console.log('Auth state:', {
-    isAuthenticated: authStore.isAuthenticated,
-    isAdmin: authStore.isAdmin,
-    user: authStore.user,
-    token: authStore.token
-  });
-  
-  // Проверяем авторизацию и права админа
   if (!authStore.isAuthenticated || !authStore.isAdmin) {
-    console.log('Redirecting to home - not authenticated or not admin');
     router.push('/');
     return;
   }
 
-  // Загружаем категории
   await categoryStore.loadCategories();
 
-  // Получаем параметры из URL
   const page = Number.parseInt((route.query.page as string) || '1', 10) || 1;
-  const categoryId = route.query.category_id ? Number.parseInt(route.query.category_id as string, 10) : null;
-  
-  // Устанавливаем фильтр
-  if (categoryId) {
-    selectedFilterCategory.value = categoryId;
-  }
-  
-  // Загружаем статьи с учетом фильтра
-  await articlesStore.loadAdminArticles(page, 4, categoryId);
+  const categoryId = resolveAdminCategoryFromRoute();
+  selectedFilterCategory.value = categoryId;
+  await articlesStore.loadAdminArticles(page, ADMIN_PER_PAGE, categoryId);
 });
 
-// Следим за изменениями URL для обновления данных
+// Browser back/forward only — in-page filter/page updates set routeSyncLock
 watch(
-  () => route.query,
-  async (query) => {
-    const page = Number.parseInt((query.page as string) || '1', 10) || 1;
-    const categoryId = query.category_id ? Number.parseInt(query.category_id as string, 10) : null;
-    
-    // Обновляем фильтр только если он изменился
-    if (categoryId !== selectedFilterCategory.value) {
-      selectedFilterCategory.value = categoryId;
+  () => [route.query.page, route.query.category, route.query.category_id] as const,
+  async ([pageRaw, categoryRaw, legacyIdRaw], previous) => {
+    if (routeSyncLock) return;
+    if (currentTab.value !== 'articles') return;
+
+    const prevCategoryRaw = previous?.[1];
+    const prevLegacyRaw = previous?.[2];
+    const categoryId = resolveCategoryFilterQuery(
+      categoryRaw,
+      categoryStore.getCategories,
+      legacyIdRaw,
+    );
+    const prevCategoryId = resolveCategoryFilterQuery(
+      prevCategoryRaw,
+      categoryStore.getCategories,
+      prevLegacyRaw,
+    );
+    const categoryChanged = categoryId !== prevCategoryId;
+
+    // Never keep page from a previous filter
+    const page = categoryChanged
+      ? 1
+      : Number.parseInt((pageRaw as string) || '1', 10) || 1;
+
+    if (
+      !categoryChanged &&
+      page === articlesStore.adminPagination.currentPage &&
+      categoryId === selectedFilterCategory.value
+    ) {
+      return;
     }
-    
-    if (page !== articlesStore.pagination.currentPage || categoryId !== selectedFilterCategory.value) {
-      await articlesStore.loadAdminArticles(page, 4, categoryId);
+
+    selectedFilterCategory.value = categoryId;
+    await articlesStore.loadAdminArticles(page, ADMIN_PER_PAGE, categoryId);
+
+    // Fix URL if history had stale ?page= together with a filter change
+    if (categoryChanged && pageRaw != null && pageRaw !== '') {
+      await syncAdminRoute(1, categoryId);
     }
   },
 );
 </script>
 
 <template>
-  <div class="admin">
+  <section class="admin">
     <div class="container">
-      <!-- Вкладки -->
-      <div class="d-flex gap-2 mb-4">
-        <button 
+      <div class="admin__tabs">
+        <button
           class="btn"
           :class="currentTab === 'articles' ? 'btn--primary' : 'btn--light'"
-          type="button" 
-          @click="currentTab = 'articles'"
+          type="button"
+          @click="switchToArticlesTab"
         >
           Статьи
         </button>
-        <button 
+        <button
           class="btn"
           :class="currentTab === 'categories' ? 'btn--primary' : 'btn--light'"
-          type="button" 
+          type="button"
           @click="switchToCategoriesTab"
         >
           Категории
         </button>
       </div>
 
-      <!-- Управление статьями -->
       <div v-if="currentTab === 'articles'">
-        <div class="d-flex justify-space-between mb-4 flex-wrap gap-2">
+        <div class="admin__toolbar">
           <button class="btn btn--light" type="button" @click="openAddDialog">
             Добавить статью
           </button>
-          <div class="d-flex gap-2 align-center">
-            <label class="label mb-0">Фильтр по категории:</label>
-            <select 
-              v-model="selectedFilterCategory" 
-              @change="loadFilteredArticles"
+          <div class="admin__filters">
+            <label class="label">Фильтр по категории:</label>
+            <select
               class="select"
+              :value="selectedFilterCategory === null ? '' : selectedFilterCategory"
+              @change="onCategoryFilterChange"
             >
-              <option :value="null">Все категории</option>
-              <option 
-                v-for="category in categories" 
-                :key="category.id" 
+              <option value="">Все категории</option>
+              <option :value="UNCATEGORIZED_CATEGORY_ID">{{ UNCATEGORIZED_CATEGORY_NAME }}</option>
+              <option
+                v-for="category in categories"
+                :key="category.id"
                 :value="category.id"
               >
                 {{ category.name }}
@@ -418,7 +519,7 @@ watch(
         </div>
 
         <div v-if="articles.length">
-          <div class="row" style="row-gap: 16px;">
+          <div class="row admin__list">
             <div
               v-for="article in articles"
               :key="article.id"
@@ -431,33 +532,33 @@ watch(
                       :src="getFullImageUrl(article.image_url)"
                       alt=""
                       height="200"
-                      class="w-100 object-cover"
+                      class="admin__card-image"
                       loading="lazy"
                     >
                   </div>
-                  <div class="col-12 col-sm-8 pa-3">
-                    <h3 class="mb-2">
+                  <div class="col-12 col-sm-8 admin__card-body">
+                    <h3 class="admin__card-title">
                       {{ article.title }}
                     </h3>
-                    <p class="mb-2">
+                    <p class="admin__card-text">
                       {{ article.content }}...
                     </p>
-                    <p class="mb-1">
+                    <p class="admin__card-meta">
                       Создано: {{ formatDate(article.created_at) }}
                     </p>
-                    <p class="mb-1">
-                      Статус: 
+                    <p class="admin__card-meta">
+                      Статус:
                       <span :class="article.is_published ? 'text-success' : 'text-warning'">
                         {{ article.is_published ? 'Опубликовано' : 'Не опубликовано' }}
                       </span>
                     </p>
-                    <p class="mb-3">
+                    <p class="admin__card-meta">
                       Автор: {{ article.author_name }}
                     </p>
-                    <p v-if="article.category_name" class="mb-3">
-                      Категория: {{ article.category_name }}
+                    <p class="admin__card-meta">
+                      Категория: {{ article.category_name || UNCATEGORIZED_CATEGORY_NAME }}
                     </p>
-                    <div class="d-flex ga-2">
+                    <div class="admin__card-actions">
                       <button
                         class="btn"
                         type="button"
@@ -489,61 +590,94 @@ watch(
           <Pagination
             :total-pages="pagination.totalPages"
             :model-value="pagination.currentPage"
+            :sync-route="false"
             @update:model-value="changePage"
           />
         </div>
-        <div v-else class="text-center">
-          Нет статей
+        <div v-else class="admin__empty">
+          <p>Нет статей</p>
+          <Pagination
+            v-if="pagination.totalPages > 1"
+            :total-pages="pagination.totalPages"
+            :model-value="pagination.currentPage"
+            :sync-route="false"
+            @update:model-value="changePage"
+          />
         </div>
       </div>
 
-      <!-- Управление категориями -->
       <div v-if="currentTab === 'categories'">
-        <div class="d-flex justify-space-between mb-4">
+        <div class="admin__toolbar">
           <button class="btn btn--light" type="button" @click="openAddCategoryDialog">
             Добавить категорию
           </button>
         </div>
 
-        <div v-if="categories.length">
-          <div class="row" style="row-gap: 16px;">
-            <div
-              v-for="category in categories"
-              :key="category.id"
-              class="col-12 col-sm-6 col-lg-4"
-            >
-              <div class="card admin__card">
-                <div class="pa-4">
-                  <h4 class="mb-2">{{ category.name }}</h4>
-                  <p v-if="category.slug" class="mb-2 text-muted">
-                    Slug: {{ category.slug }}
-                  </p>
-                  <p v-if="category.description" class="mb-3">
-                    {{ category.description }}
-                  </p>
-                  <div class="d-flex ga-2">
+        <div v-if="categoryArticlesLoading" class="admin__empty">
+          Загрузка...
+        </div>
+        <div v-else class="row admin__list">
+          <div
+            v-for="group in categoriesWithArticles"
+            :key="group.id"
+            class="col-12 col-sm-6 col-lg-4"
+          >
+            <div class="card admin__card">
+              <div class="admin__card-body">
+                <h4 class="admin__card-title">{{ group.name }}</h4>
+                <p v-if="group.slug && !group.isVirtual" class="admin__card-meta text-muted">
+                  Slug: {{ group.slug }}
+                </p>
+                <p v-if="group.description" class="admin__card-text">
+                  {{ group.description }}
+                </p>
+                <p class="admin__card-meta">
+                  Статей: {{ group.articles.length }}
+                </p>
+
+                <ul v-if="group.articles.length" class="admin__category-articles">
+                  <li
+                    v-for="article in group.articles"
+                    :key="article.id"
+                  >
                     <button
-                      class="btn"
+                      class="admin__category-article-link"
                       type="button"
-                      @click="openEditCategoryDialog(category)"
+                      @click="openEditDialog(article)"
                     >
-                      Редактировать
+                      {{ article.title }}
                     </button>
-                    <button
-                      class="btn btn--danger"
-                      type="button"
-                      @click="deleteCategory(category.id)"
+                    <span
+                      class="admin__category-article-status"
+                      :class="article.is_published ? 'text-success' : 'text-warning'"
                     >
-                      Удалить
-                    </button>
-                  </div>
+                      {{ article.is_published ? 'опубл.' : 'черновик' }}
+                    </span>
+                  </li>
+                </ul>
+                <p v-else class="admin__card-meta text-muted">
+                  Нет статей
+                </p>
+
+                <div v-if="!group.isVirtual" class="admin__card-actions">
+                  <button
+                    class="btn"
+                    type="button"
+                    @click="openEditCategoryDialog(group)"
+                  >
+                    Редактировать
+                  </button>
+                  <button
+                    class="btn btn--danger"
+                    type="button"
+                    @click="deleteCategory(group.id)"
+                  >
+                    Удалить
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div v-else class="text-center">
-          Нет категорий
         </div>
       </div>
 
@@ -567,9 +701,9 @@ watch(
               <label class="label">Категория</label>
               <select v-model="currentArticle.category_id" class="select">
                 <option :value="null">Без категории</option>
-                <option 
-                  v-for="category in categories" 
-                  :key="category.id" 
+                <option
+                  v-for="category in categories"
+                  :key="category.id"
                   :value="category.id"
                 >
                   {{ category.name }}
@@ -578,10 +712,10 @@ watch(
             </div>
             <div class="field">
               <label class="label">Статус публикации</label>
-              <label class="d-flex align-center ga-2">
-                <input 
-                  type="checkbox" 
+              <label class="admin__checkbox">
+                <input
                   v-model="currentArticle.is_published"
+                  type="checkbox"
                   class="checkbox"
                 >
                 <span>Опубликовано</span>
@@ -589,15 +723,14 @@ watch(
             </div>
             <div class="field">
               <label class="label">Изображение</label>
-              <div class="mb-2">
+              <div class="admin__preview">
                 <img
                   v-if="currentArticle.imagePreview"
                   :src="currentArticle.imagePreview"
                   alt=""
                   height="100"
-                  class="mb-2"
                 >
-                <div v-if="currentArticle.imagePreview" class="text-caption mb-2">
+                <div v-if="currentArticle.imagePreview" class="admin__preview-caption">
                   <span v-if="currentArticle.file">Выбрано изображение: {{ currentArticle.fileName }}</span>
                   <span v-else>Существующее изображение</span>
                 </div>
@@ -605,7 +738,7 @@ watch(
               <input type="file" accept="image/jpeg,image/png" @change="handleFileChange">
             </div>
           </div>
-          <footer class="modal__footer d-flex ga-2 justify-end">
+          <footer class="modal__footer">
             <button class="btn" type="button" @click="dialogOpen = false">
               Закрыть
             </button>
@@ -621,7 +754,6 @@ watch(
         </section>
       </dialog>
 
-      <!-- Диалог для управления категориями -->
       <dialog v-if="categoryDialogOpen" open class="modal">
         <section class="modal__content">
           <header class="modal__header">
@@ -635,15 +767,20 @@ watch(
               <input v-model="currentCategory.name" type="text" class="input">
             </div>
             <div class="field">
-              <label class="label">Slug</label>
-              <input v-model="currentCategory.slug" type="text" class="input">
+              <label class="label">Slug (латиницей, например cars)</label>
+              <input
+                v-model="currentCategory.slug"
+                type="text"
+                class="input"
+                placeholder="оставьте пустым — сгенерируется из названия"
+              >
             </div>
             <div class="field">
               <label class="label">Описание</label>
               <textarea v-model="currentCategory.description" class="textarea" rows="3" />
             </div>
           </div>
-          <footer class="modal__footer d-flex ga-2 justify-end">
+          <footer class="modal__footer">
             <button class="btn" type="button" @click="categoryDialogOpen = false">
               Закрыть
             </button>
@@ -659,19 +796,123 @@ watch(
         </section>
       </dialog>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped lang="scss">
 .admin {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('/image/admin.jpg');
-  background-position: center;
-  background-size: cover;
-}
+  &__tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
 
-// .admin__card {
-//   background-color: color(cream);
-// }
+  &__toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__filters {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+
+    .label {
+      margin-bottom: 0;
+    }
+
+    .select {
+      width: auto;
+      min-width: 180px;
+    }
+  }
+
+  &__list {
+    row-gap: 16px;
+  }
+
+  &__card {
+    background-color: #f5deb3;
+  }
+
+  &__card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  &__card-body {
+    padding: 1rem;
+  }
+
+  &__card-title {
+    margin: 0 0 0.5rem;
+  }
+
+  &__card-text {
+    margin: 0 0 0.5rem;
+  }
+
+  &__card-meta {
+    margin: 0 0 0.35rem;
+  }
+
+  &__card-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+  }
+
+  &__category-articles {
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  &__category-article-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: underline;
+    font: inherit;
+  }
+
+  &__category-article-status {
+    margin-left: 0.35rem;
+    font-size: 0.85em;
+  }
+
+  &__empty {
+    text-align: center;
+    padding: 2rem 0;
+  }
+
+  &__checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__preview {
+    margin-bottom: 0.5rem;
+  }
+
+  &__preview-caption {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+  }
+}
 
 .modal {
   position: fixed;
@@ -682,28 +923,18 @@ watch(
   background-color: rgba(0, 0, 0, 0.4);
   border: none;
   padding: 0;
+  max-width: none;
+  width: 100%;
+  height: 100%;
 }
 
 .modal__content {
   background-color: #fff;
   border-radius: 8px;
   max-width: 500px;
-  width: 100%;
+  width: calc(100% - 2rem);
   padding: 16px;
-}
-
-.field {
-  margin-bottom: 12px;
-}
-
-.label {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.input,
-.textarea {
-  width: 100%;
+  color: #323136;
 }
 </style>
 

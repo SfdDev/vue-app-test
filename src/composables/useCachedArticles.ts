@@ -49,16 +49,7 @@ export const useCachedArticles = async (page: number = 1, perPage: number = 6) =
     }),
     {
       default: () => ({ data: [], meta: { current_page: 1, total_pages: 0, total: 0, per_page: perPage } }),
-      transform: (data: ArticlesResponse) => {
-        // Добавляем полные URL для изображений
-        return {
-          ...data,
-          data: data.data.map(article => ({
-            ...article,
-            image_url: article.image_url ? `/_nuxt/public${article.image_url}` : null
-          }))
-        }
-      }
+      transform: (data: ArticlesResponse) => data
     }
   )
 
@@ -91,15 +82,7 @@ export const useCachedAdminArticles = async (page: number = 1, perPage: number =
     }),
     {
       default: () => ({ data: [], meta: { current_page: 1, total_pages: 0, total: 0, per_page: perPage } }),
-      transform: (data: ArticlesResponse) => {
-        return {
-          ...data,
-          data: data.data.map(article => ({
-            ...article,
-            image_url: article.image_url ? `/_nuxt/public${article.image_url}` : null
-          }))
-        }
-      }
+      transform: (data: ArticlesResponse) => data
     }
   )
 
@@ -129,10 +112,7 @@ export const useCachedArticle = async (id: number) => {
     () => $fetch<Article>(`/api/articles/${id}`),
     {
       default: () => null,
-      transform: (article: Article) => ({
-        ...article,
-        image_url: article.image_url ? `/_nuxt/public${article.image_url}` : null
-      })
+      transform: (article: Article) => article
     }
   )
 

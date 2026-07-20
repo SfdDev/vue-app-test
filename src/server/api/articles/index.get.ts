@@ -1,39 +1,30 @@
-import { getArticles } from '../../services/article.service';
+import { articleService } from '../../composition/container';
+import { mapDomainError } from '../../shared/http/map-error';
+import { categoryFilterCacheKey, parseCategoryFilterParam } from '../../../shared/category-filter';
+import {
+  getArticlesListCache,
+  setArticlesListCache,
+} from '../../shared/articles-list-cache';
 
-// Простое memory кеширование
-const cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 минут
+const CACHE_TTL = 30 * 1000; // short TTL; mutations also clear the cache
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const page = Number.parseInt((query.page as string) ?? '1', 10) || 1;
   const perPage = Number.parseInt((query.per_page as string) ?? '6', 10) || 6;
-  const categoryId = query.category_id ? Number.parseInt(query.category_id as string, 10) : null;
-  
-  const cacheKey = `articles:${page}:${perPage}:${categoryId || 'all'}`;
+  const categoryId = parseCategoryFilterParam(query.category_id);
+  const cacheKey = `articles:${page}:${perPage}:${categoryFilterCacheKey(categoryId)}`;
 
   try {
-    // Проверяем кеш
-    const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return cached.data;
+    const cached = getArticlesListCache(cacheKey, CACHE_TTL);
+    if (cached) {
+      return cached;
     }
 
-    // Загружаем данные
-    const result = await getArticles(page, perPage, categoryId);
-    
-    // Сохраняем в кеш
-    cache.set(cacheKey, {
-      data: result,
-      timestamp: Date.now()
-    });
-
+    const result = await articleService.listPublished(page, perPage, categoryId);
+    setArticlesListCache(cacheKey, result);
     return result;
-  } catch (error: any) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: error.message ?? 'Ошибка получения статей',
-    });
+  } catch (error) {
+    mapDomainError(error);
   }
 });
-

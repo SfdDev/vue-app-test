@@ -1,12 +1,14 @@
-$color--warning: red;
-$color--gray: red;
-$color--white: red;
-$color--light: red;
-$color--dark: red;
+$color--warning: color(warning);
+$color--gray: color(gray);
+$color--white: color(white);
+$color--light: color(light);
+$color--dark: color(dark);
 
- button.btn, a.btn {
+button.btn,
+a.btn {
   padding: 10px;
   border-radius: 5px;
+  border: none;
   text-decoration: unset;
   font-weight: bold;
   text-transform: uppercase;
@@ -15,9 +17,9 @@ $color--dark: red;
   position: relative;
   display: inline-block;
   transform-style: preserve-3d;
-  transition: background-color 0.3s ease, color 0.3s ease, transform 0.15s; // Плавность для фона и текста
-  color: color(dark);
-   background-color: $color--gray;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.15s;
+  color: $color--dark;
+  background-color: $color--gray;
 
   @media #{$sm} {
     font-size: 0.8rem;
@@ -27,16 +29,15 @@ $color--dark: red;
     font-size: 0.75rem;
   }
 
-   &:hover {
-     color: $color--dark;
-     background-color: $color--warning;
+  &:hover {
+    color: $color--dark;
+    background-color: $color--warning;
 
-     & span {
-       transform: scale(1.05);
-       display: block;
-     }
-   }
-
+    & span {
+      transform: scale(1.05);
+      display: block;
+    }
+  }
 
   &:active {
     background: $color--dark;
@@ -49,7 +50,12 @@ $color--dark: red;
       box-shadow: unset;
       transform: translate3d(0, 0, -1em);
     }
+  }
 
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
   }
 
   &::before {
@@ -80,7 +86,7 @@ $color--dark: red;
     }
 
     &:active {
-      background: #979797;
+      background: color(dark-gray);
       color: $color--white;
     }
   }
@@ -98,61 +104,85 @@ $color--dark: red;
     }
 
     &:active {
-      background: #979797;
+      background: color(dark-gray);
       color: $color--white;
     }
   }
 
-   &--default {
-     border: 1px solid black;
-   }
+  &--default {
+    border: 1px solid black;
+  }
 
-   &--pixel {
-     border: none;
-     display: flex;
-     box-shadow: inset 3px 3px 0 #fff, inset -3px -3px 0 #666;
+  &--primary {
+    background-color: color(primary);
+    color: $color--white;
 
-     &::before {
-       top: -1px;
-     }
+    &:hover {
+      background-color: #1e88e5;
+      color: $color--white;
+    }
+  }
 
-     &:hover {
-       background-color: unset;
-       border: none;
-     }
+  &--outline {
+    background-color: transparent;
+    border: 2px solid color(cream);
+    color: color(cream);
 
-     &:active {
-       background: $color--dark;
-       transform: translate(0em, 0.25em);
-       color: $color--white;
+    &:hover {
+      background-color: color(cream);
+      color: $color--dark;
+    }
+  }
 
-       &::before {
-         left: 0;
-         top: 0;
-       }
+  &--danger {
+    background-color: color(danger);
+    color: $color--white;
 
-     }
-   }
-}
-.v-btn {
-  $this: &;
+    &:hover {
+      background-color: #c62828;
+      color: $color--white;
+    }
+  }
 
-
-  &--active {
+  &--pixel {
+    border: none;
+    display: flex;
     box-shadow: inset 3px 3px 0 #fff, inset -3px -3px 0 #666;
-    background: $color--dark !important;
-    transform: translate(0em, 0.25em);
-    color: $color--white !important;
 
     &::before {
-      left: 0 !important;
-      top: -3px !important;
+      top: -1px;
     }
 
-    span {
-      transform: scale(1.05);
+    &:hover {
+      background-color: unset;
+      border: none;
     }
 
+    &:active {
+      background: $color--dark;
+      transform: translate(0em, 0.25em);
+      color: $color--white;
 
+      &::before {
+        left: 0;
+        top: 0;
+      }
+    }
+  }
+}
+
+.btn--active {
+  box-shadow: inset 3px 3px 0 #fff, inset -3px -3px 0 #666;
+  background: $color--dark !important;
+  transform: translate(0em, 0.25em);
+  color: $color--white !important;
+
+  &::before {
+    left: 0 !important;
+    top: -3px !important;
+  }
+
+  span {
+    transform: scale(1.05);
   }
 }

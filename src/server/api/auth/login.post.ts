@@ -1,16 +1,12 @@
-import { loginUser } from '../../services/auth.service';
+import { authService } from '../../composition/container';
+import { mapDomainError } from '../../shared/http/map-error';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ username: string; password: string }>(event);
 
   try {
-    const result = await loginUser(body.username, body.password);
-    return result;
-  } catch (error: any) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: error.message ?? 'Ошибка входа',
-    });
+    return await authService.login(body.username, body.password);
+  } catch (error) {
+    mapDomainError(error);
   }
 });
-

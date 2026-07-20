@@ -5,12 +5,3 @@ import Hero from '@/components/hero.vue';
 <template>
   <Hero />
 </template>
-
-<style scoped lang="scss">
-.learn {
-  background-image: url('/image/learn.webp');
-  background-position: center;
-  background-size: cover;
-}
-</style>
-

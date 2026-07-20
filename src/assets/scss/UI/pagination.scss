@@ -7,24 +7,19 @@
   padding: 10px;
   flex-wrap: wrap;
   width: 100%;
+  margin-top: 16px;
+
+  &__page--active {
+    font-weight: 700;
+    background: color(dark) !important;
+    color: color(white) !important;
+    transform: translate(0em, 0.25em);
+  }
 
   button {
-    padding: 8px 16px;
-    border: 1px solid black;
-    background-color: color(white);
-    color: black;
-    cursor: pointer;
-    border-radius: 4px;
-    min-width: 40px;
-    text-align: center;
-
     &:disabled {
-      background-color: #cccccc;
+      background-color: color(gray);
       cursor: not-allowed;
-    }
-
-    &:hover:not(:disabled):not(.active) {
-      background-color: red;
     }
   }
 }

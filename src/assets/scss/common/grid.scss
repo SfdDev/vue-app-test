@@ -1,0 +1,97 @@
+.container {
+  width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  padding-right: calc(#{$grid-gutter-width} * 0.5);
+  padding-left: calc(#{$grid-gutter-width} * 0.5);
+
+  @media #{$min-sm} {
+    max-width: map-get($container-max-widths, sm);
+  }
+
+  @media #{$min-md} {
+    max-width: map-get($container-max-widths, md);
+  }
+
+  @media #{$min-lg} {
+    max-width: map-get($container-max-widths, lg);
+  }
+
+  @media #{$min-xl} {
+    max-width: map-get($container-max-widths, xl);
+  }
+
+  @media #{$min-xxl} {
+    max-width: map-get($container-max-widths, xxl);
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: calc(#{$grid-gutter-width} * -0.5);
+  margin-left: calc(#{$grid-gutter-width} * -0.5);
+
+  &.no-gutters {
+    margin-right: 0;
+    margin-left: 0;
+
+    > [class*="col"] {
+      padding-right: 0;
+      padding-left: 0;
+    }
+  }
+
+  &.justify-center {
+    justify-content: center;
+  }
+}
+
+@mixin make-col($size) {
+  flex: 0 0 auto;
+  width: calc(100% / #{$grid-columns} * #{$size});
+}
+
+.col {
+  flex: 1 0 0%;
+  padding-right: calc(#{$grid-gutter-width} * 0.5);
+  padding-left: calc(#{$grid-gutter-width} * 0.5);
+}
+
+@for $i from 1 through $grid-columns {
+  .col-#{$i} {
+    @include make-col($i);
+    padding-right: calc(#{$grid-gutter-width} * 0.5);
+    padding-left: calc(#{$grid-gutter-width} * 0.5);
+  }
+}
+
+@media #{$min-sm} {
+  @for $i from 1 through $grid-columns {
+    .col-sm-#{$i} {
+      @include make-col($i);
+      padding-right: calc(#{$grid-gutter-width} * 0.5);
+      padding-left: calc(#{$grid-gutter-width} * 0.5);
+    }
+  }
+}
+
+@media #{$min-md} {
+  @for $i from 1 through $grid-columns {
+    .col-md-#{$i} {
+      @include make-col($i);
+      padding-right: calc(#{$grid-gutter-width} * 0.5);
+      padding-left: calc(#{$grid-gutter-width} * 0.5);
+    }
+  }
+}
+
+@media #{$min-lg} {
+  @for $i from 1 through $grid-columns {
+    .col-lg-#{$i} {
+      @include make-col($i);
+      padding-right: calc(#{$grid-gutter-width} * 0.5);
+      padding-left: calc(#{$grid-gutter-width} * 0.5);
+    }
+  }
+}

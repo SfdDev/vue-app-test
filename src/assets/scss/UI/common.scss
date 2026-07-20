@@ -1,17 +1,17 @@
-$name-user__color: red;
-$name-user__color--xl: red;
-$name-user__background-color--xl: red;
+$name-user__color: color(warning);
+$hover--yellow__color: color(dark);
+$hover--yellow__background-color: color(warning);
 
-$hover--yellow__color: red;
-$hover--yellow__background-color: red;
-
-//логотип
 .logo {
   display: flex;
   align-items: center;
+
+  img {
+    max-height: 40px;
+    width: auto;
+  }
 }
 
-//имя пользователя
 .name-user {
   display: inline-flex;
   align-items: center;
@@ -20,22 +20,21 @@ $hover--yellow__background-color: red;
   color: $name-user__color;
 
   &--xl {
-    color: red;
+    color: $name-user__color;
     text-transform: capitalize;
-    font-size: clamp(1.5rem, 5vw, 4rem); // Минимум 2rem, идеально 5vw, максимум 4rem
+    font-size: clamp(1.5rem, 5vw, 4rem);
   }
 }
 
-//желтый ховер с черным текстом
 .hover--yellow {
-
+  &:hover {
+    color: $hover--yellow__color;
+    background-color: $hover--yellow__background-color;
+  }
 }
 
-//скеил по ховеру
 .scale-on-hover:hover span {
-  @media  #{$lg} {
+  @media #{$lg} {
     transform: scale(1.1);
   }
-
-
 }

@@ -27,20 +27,18 @@ onMounted(() => {
 
 <template>
   <Hero />
-  <section style="height: 150vh; background: #f3f3f3;">
+  <section class="parallax-demo">
     <div ref="box" class="box">
-      ScrollTrigger работает 🚀
+      ScrollTrigger работает
     </div>
   </section>
-  <div class="parallax-container" />
-  <div class="scroll-spacer" />
+  <section class="parallax-container" />
+  <section class="scroll-spacer" />
 </template>
 
 <style scoped lang="scss">
-.parallax {
-  background-image: url('/image/todo.webp');
-  background-position: center;
-  background-size: cover;
+.parallax-demo {
+  height: 150vh;
+  background: #f3f3f3;
 }
 </style>
-

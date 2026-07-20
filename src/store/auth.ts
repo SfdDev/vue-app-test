@@ -1,10 +1,18 @@
 import { defineStore } from 'pinia';
 
+export interface AuthUser {
+  id: number;
+  username: string;
+  is_admin: boolean;
+}
+
 export interface AuthState {
-  user: any | null;
+  user: AuthUser | null;
   token: string | null;
   loading: boolean;
   error: string | null;
+  /** True after client auth bootstrap finished (avoids SSR/client hydration mismatch) */
+  ready: boolean;
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -13,16 +21,17 @@ export const useAuthStore = defineStore('auth', {
     token: null,
     loading: false,
     error: null,
+    ready: false,
   }),
 
   getters: {
-    isAuthenticated: (state) => !!state.token,
+    isAuthenticated: (state) => !!state.token && !!state.user,
     isAdmin: (state) => state.user?.is_admin || false,
   },
 
   actions: {
     initializeAuth() {
-      if (process.client) {
+      if (import.meta.client) {
         const token = localStorage.getItem('token');
         if (token) {
           this.token = token;
@@ -30,35 +39,37 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    getAuthHeader(): Record<string, string> {
+      const token = this.token || (import.meta.client ? localStorage.getItem('token') : null);
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    },
+
     async checkAuth() {
       if (!this.token) {
-        console.log('No token, skipping checkAuth');
+        this.ready = true;
         return;
       }
-      
-      console.log('Checking auth with token:', this.token);
+
       this.loading = true;
       try {
-        const response = await $fetch<{ user: any }>('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${this.token}`
-          }
+        const response = await $fetch<AuthUser>('/api/auth/me', {
+          headers: this.getAuthHeader(),
         });
-        
-        console.log('Auth check response:', response);
+
         this.user = response;
       } catch (error) {
         console.error('Auth check failed:', error);
         this.logout();
       } finally {
         this.loading = false;
+        this.ready = true;
       }
     },
 
     async register(username: string, password: string, recaptcha: string) {
       this.loading = true;
       this.error = null;
-      
+
       try {
         await $fetch('/api/auth/register', {
           method: 'POST',
@@ -68,10 +79,8 @@ export const useAuthStore = defineStore('auth', {
             recaptcha,
           },
         });
-        
-        this.loading = false;
       } catch (error: any) {
-        this.error = error.message || 'Ошибка регистрации';
+        this.error = error.data?.message || error.message || 'Ошибка регистрации';
         throw error;
       } finally {
         this.loading = false;
@@ -81,24 +90,26 @@ export const useAuthStore = defineStore('auth', {
     async login(username: string, password: string) {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        const response = await $fetch<{ token: string; user: any }>('/api/auth/login', {
+        const response = await $fetch<{ token: string; user: AuthUser }>('/api/auth/login', {
           method: 'POST',
           body: {
             username,
             password,
           },
         });
-        
+
         if (response.token) {
           this.token = response.token;
           this.user = response.user;
+          this.ready = true;
+          if (import.meta.client) {
+            localStorage.setItem('token', response.token);
+          }
         }
-        
-        this.loading = false;
       } catch (error: any) {
-        this.error = error.message || 'Ошибка входа';
+        this.error = error.data?.message || error.message || 'Ошибка входа';
         throw error;
       } finally {
         this.loading = false;
@@ -108,7 +119,8 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.token = null;
       this.user = null;
-      if (process.client) {
+      this.ready = true;
+      if (import.meta.client) {
         localStorage.removeItem('token');
       }
     },

@@ -1,6 +1,9 @@
-// stores/articles.ts - Composition API версия с $fetch
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { useAuthStore } from '@/store/auth';
+import { categoryFilterCacheKey } from '@/shared/category-filter';
+import { notifyArticlesChanged } from '@/shared/articles-sync';
+
 
 // ==================== ТИПЫ ====================
 export interface Article {
@@ -17,6 +20,7 @@ export interface Article {
   category_id?: number | null;
   category_name?: string;
   category_slug?: string;
+  slug?: string | null;
 }
 
 export interface PaginationMeta {
@@ -56,20 +60,29 @@ export interface ArticleFormData {
 export const useArticlesStore = defineStore('articles', () => {
   // State
   const articles = ref<Article[]>([]);
+  const adminArticles = ref<Article[]>([]);
   const article = ref<Article | null>(null);
   const pages = ref<Record<string, PageCache>>({});
+  const adminPages = ref<Record<string, PageCache>>({});
   const cachedArticle = ref<Record<number, Article>>({});
   const loading = ref(false);
   const error = ref<string | null>(null);
   const uploadProgress = ref(0);
   const originPage = ref<number>(1);
 
-  // Default pagination state
+  // Default pagination state (blog)
   const pagination = ref<PaginationState>({
     currentPage: 1,
     totalPages: 1,
     totalArticles: 0,
     articlesPerPage: 6,
+  });
+
+  const adminPagination = ref<PaginationState>({
+    currentPage: 1,
+    totalPages: 1,
+    totalArticles: 0,
+    articlesPerPage: 4,
   });
 
   // ==================== ACTIONS ====================
@@ -80,6 +93,7 @@ export const useArticlesStore = defineStore('articles', () => {
 
   const clearAllCache = (): void => {
     pages.value = {};
+    adminPages.value = {};
     cachedArticle.value = {};
     pagination.value = {
       currentPage: 1,
@@ -87,20 +101,38 @@ export const useArticlesStore = defineStore('articles', () => {
       totalArticles: 0,
       articlesPerPage: 6,
     };
+    adminPagination.value = {
+      currentPage: 1,
+      totalPages: 1,
+      totalArticles: 0,
+      articlesPerPage: 4,
+    };
     articles.value = [];
+    adminArticles.value = [];
   };
 
-  const loadArticles = async (page: number = 1, perPage: number = 6, categoryId?: number | null): Promise<Article[]> => {
-    const cacheKey = `${perPage}_${page}_${categoryId || 'all'}`;
+  const invalidatePublicCache = (): void => {
+    pages.value = {};
+    cachedArticle.value = {};
+    notifyArticlesChanged();
+  };
 
-    // Проверка кэша
-    if (pages.value[cacheKey]) {
+  const loadArticles = async (
+    page: number = 1,
+    perPage: number = 6,
+    categoryId?: number | null,
+    force = false,
+  ): Promise<Article[]> => {
+    const cacheKey = `${perPage}_${page}_${categoryFilterCacheKey(categoryId)}`;
+
+    if (!force && pages.value[cacheKey]) {
       articles.value = [...pages.value[cacheKey].data.data];
       pagination.value = {
         ...pagination.value,
         currentPage: page,
         totalPages: pages.value[cacheKey].meta.total_pages,
         totalArticles: pages.value[cacheKey].meta.total,
+        articlesPerPage: perPage,
       };
       return articles.value;
     }
@@ -109,16 +141,20 @@ export const useArticlesStore = defineStore('articles', () => {
     error.value = null;
 
     try {
-      const query: any = { page, per_page: perPage };
-      if (categoryId) {
+      const query: Record<string, string | number> = { page, per_page: perPage };
+      if (categoryId != null) {
         query.category_id = categoryId;
+      }
+      if (force) {
+        query._ = Date.now();
       }
 
       const response = await $fetch<ArticlesResponse>(`/api/articles`, {
-        query: query,
+        query,
       });
 
-      articles.value = [...response.data];
+      // Public API returns only published; keep a hard filter as safety
+      articles.value = response.data.filter((item) => item.is_published !== false);
       pagination.value = {
         ...pagination.value,
         currentPage: page,
@@ -127,9 +163,8 @@ export const useArticlesStore = defineStore('articles', () => {
         articlesPerPage: perPage,
       };
 
-      // Сохраняем в кэш
       pages.value[cacheKey] = {
-        data: response,
+        data: { ...response, data: articles.value },
         meta: response.meta,
       };
 
@@ -145,41 +180,38 @@ export const useArticlesStore = defineStore('articles', () => {
   };
 
   const loadAdminArticles = async (page: number = 1, perPage: number = 4, categoryId?: number | null): Promise<Article[]> => {
-    const cacheKey = `${perPage}_${page}_${categoryId || 'all'}`;
+    const cacheKey = `${perPage}_${page}_${categoryFilterCacheKey(categoryId)}`;
 
     loading.value = true;
     error.value = null;
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
-      const query: any = { page, per_page: perPage };
-      if (categoryId) {
+      const query: Record<string, string | number> = { page, per_page: perPage };
+      if (categoryId != null) {
         query.category_id = categoryId;
       }
-      
+
+      const authStore = useAuthStore();
       const response = await $fetch<ArticlesResponse>(`/api/admin/articles`, {
-        query: query,
-        headers: { 
-          Authorization: token ? `Bearer ${token}` : '',
-        },
+        query,
+        headers: authStore.getAuthHeader(),
       });
 
-      articles.value = [...response.data];
-      pagination.value = {
-        ...pagination.value,
+      adminArticles.value = [...response.data];
+      adminPagination.value = {
+        ...adminPagination.value,
         currentPage: page,
         totalPages: response.meta.total_pages,
         totalArticles: response.meta.total,
         articlesPerPage: perPage,
       };
 
-      // Сохраняем в кэш
-      pages.value[cacheKey] = {
+      adminPages.value[cacheKey] = {
         data: response,
         meta: response.meta,
       };
 
-      return articles.value;
+      return adminArticles.value;
     } catch (err) {
       const errorObj = err as Error;
       error.value = 'Ошибка загрузки статей: ' + errorObj.message;
@@ -190,22 +222,27 @@ export const useArticlesStore = defineStore('articles', () => {
     }
   };
 
-  const loadArticleById = async (id: string | number): Promise<void> => {
+  const loadArticleById = async (id: string | number): Promise<Article | null> => {
     loading.value = true;
     error.value = null;
 
     const articleId = Number(id);
 
-    // Проверка кэша
     if (cachedArticle.value[articleId]) {
       article.value = { ...cachedArticle.value[articleId] };
       loading.value = false;
-      return;
+      return article.value;
     }
 
     try {
-      const response = await $fetch<{ data: Article }>(`/api/articles/${articleId}`);
-      const articleData = response.data;
+      const response = await $fetch<Article | { data: Article }>(`/api/articles/${articleId}`);
+      const articleData = 'data' in response && response.data && typeof response.data === 'object' && 'id' in response.data
+        ? response.data
+        : (response as Article);
+
+      if (!articleData?.id) {
+        throw new Error('Статья не найдена');
+      }
 
       const newArticle: Article = {
         id: articleData.id,
@@ -217,25 +254,68 @@ export const useArticlesStore = defineStore('articles', () => {
         author_id: articleData.author_id,
         author_name: articleData.author_name,
         is_published: articleData.is_published,
+        category_id: articleData.category_id ?? null,
+        category_name: articleData.category_name,
+        category_slug: articleData.category_slug,
+        slug: articleData.slug ?? null,
       };
 
       article.value = newArticle;
       cachedArticle.value[articleId] = { ...newArticle };
+      return newArticle;
     } catch (err) {
       const errorObj = err as Error;
       error.value = 'Ошибка загрузки статьи';
       console.error('Ошибка загрузки статьи:', err);
       article.value = null;
+      return null;
     } finally {
       loading.value = false;
     }
   };
 
-  const clearPageCache = (page: number, perPage: number): void => {
-    const cacheKey = `${perPage}_${page}`;
-    if (pages.value[cacheKey]) {
-      delete pages.value[cacheKey];
+  const loadArticleByPath = async (categorySlug: string, articleSlug: string): Promise<Article | null> => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await $fetch<Article>(
+        `/api/articles/by-path/${encodeURIComponent(categorySlug)}/${encodeURIComponent(articleSlug)}`,
+      );
+
+      const newArticle: Article = {
+        id: response.id,
+        title: response.title,
+        content: response.content,
+        image_url: response.image_url,
+        created_at: response.created_at,
+        updated_at: response.updated_at,
+        author_id: response.author_id,
+        author_name: response.author_name,
+        is_published: response.is_published,
+        category_id: response.category_id ?? null,
+        category_name: response.category_name,
+        category_slug: response.category_slug,
+        slug: response.slug ?? null,
+      };
+
+      article.value = newArticle;
+      cachedArticle.value[newArticle.id] = { ...newArticle };
+      return newArticle;
+    } catch (err) {
+      console.error('Ошибка загрузки статьи по пути:', err);
+      error.value = 'Ошибка загрузки статьи';
+      article.value = null;
+      return null;
+    } finally {
+      loading.value = false;
     }
+  };
+
+  const clearPageCache = (page: number, perPage: number, categoryId?: number | null): void => {
+    const cacheKey = `${perPage}_${page}_${categoryFilterCacheKey(categoryId)}`;
+    delete pages.value[cacheKey];
+    delete adminPages.value[cacheKey];
   };
 
   const addArticle = async (articleData: ArticleFormData): Promise<Article> => {
@@ -248,7 +328,7 @@ export const useArticlesStore = defineStore('articles', () => {
       formData.append('content', articleData.content);
       formData.append('is_published', String(articleData.is_published ?? true));
       
-      if (articleData.category_id) {
+      if (articleData.category_id != null && articleData.category_id !== undefined) {
         formData.append('category_id', String(articleData.category_id));
       }
       
@@ -258,23 +338,18 @@ export const useArticlesStore = defineStore('articles', () => {
         formData.append('image_url', articleData.image_url);
       }
 
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+      const authStore = useAuthStore();
       const response = await $fetch<{ data: { article: Article } }>(
         `/api/articles`,
         {
           method: 'POST',
           body: formData,
-          headers: {
-            Authorization: token ? `Bearer ${token}` : '',
-          },
+          headers: authStore.getAuthHeader(),
         }
       );
-      
-      // Очищаем кэш текущей страницы
-      clearPageCache(pagination.value.currentPage, pagination.value.articlesPerPage);
 
-      // Обновляем кэш для первой страницы
-      await loadArticles(1, pagination.value.articlesPerPage);
+      invalidatePublicCache();
+      adminPages.value = {};
       
       return response.data.article;
     } catch (err) {
@@ -309,28 +384,19 @@ export const useArticlesStore = defineStore('articles', () => {
         formData.append('image_url', articleData.image_url);
       }
 
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+      const authStore = useAuthStore();
       const response = await $fetch<{ data: { article: Article } }>(
         `/api/articles/${articleData.id}`,
         {
           method: 'PUT',
           body: formData,
-          headers: {
-            Authorization: token ? `Bearer ${token}` : '',
-          },
+          headers: authStore.getAuthHeader(),
         }
       );
 
-      // Очищаем кэш текущей страницы
-      clearPageCache(pagination.value.currentPage, pagination.value.articlesPerPage);
-      
-      // Очищаем кэш статьи
-      if (cachedArticle.value[articleData.id]) {
-        delete cachedArticle.value[articleData.id];
-      }
-
-      // Обновляем список статей
-      await loadArticles(pagination.value.currentPage, pagination.value.articlesPerPage);
+      invalidatePublicCache();
+      adminPages.value = {};
+      delete cachedArticle.value[articleData.id];
 
       return response.data.article;
     } catch (err) {
@@ -347,31 +413,18 @@ export const useArticlesStore = defineStore('articles', () => {
     error.value = null;
 
     try {
+      const authStore = useAuthStore();
       await $fetch(`/api/articles/${id}`, {
         method: 'DELETE',
+        headers: authStore.getAuthHeader(),
       });
 
-      // Удаляем статью из всех кэшей страниц
-      for (const key in pages.value) {
-        const pageData = pages.value[key];
-        pageData.data.data = pageData.data.data.filter(article => article.id !== id);
-      }
+      invalidatePublicCache();
+      adminPages.value = {};
+      delete cachedArticle.value[id];
+      articles.value = articles.value.filter(a => a.id !== id);
+      adminArticles.value = adminArticles.value.filter(a => a.id !== id);
 
-      // Удаляем из кэша статей
-      if (cachedArticle.value[id]) {
-        delete cachedArticle.value[id];
-      }
-
-      // Обновляем текущие статьи
-      articles.value = articles.value.filter(article => article.id !== id);
-      
-      // Обновляем пагинацию
-      pagination.value.totalArticles = Math.max(0, pagination.value.totalArticles - 1);
-      pagination.value.totalPages = Math.ceil(
-        pagination.value.totalArticles / pagination.value.articlesPerPage
-      );
-
-      // Очищаем текущую статью если она удалена
       if (article.value?.id === id) {
         article.value = null;
       }
@@ -390,42 +443,43 @@ export const useArticlesStore = defineStore('articles', () => {
     error.value = null;
 
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+      const authStore = useAuthStore();
       const response = await $fetch<{ data: { article: Article; message: string } }>(
         `/api/articles/${id}/toggle-publish`,
         {
           method: 'POST',
-          headers: {
-            Authorization: token ? `Bearer ${token}` : '',
-          },
+          headers: authStore.getAuthHeader(),
         }
       );
 
       const updatedArticle = response.data.article;
 
-      // Обновляем статью в кэше если она там есть
+      invalidatePublicCache();
+      adminPages.value = {};
+
       if (cachedArticle.value[id]) {
         cachedArticle.value[id] = { ...updatedArticle };
       }
 
-      // Обновляем статью в кэше страниц
-      for (const key in pages.value) {
-        const pageData = pages.value[key];
-        const articleIndex = pageData.data.data.findIndex(article => article.id === id);
-        if (articleIndex !== -1) {
-          pageData.data.data[articleIndex] = { ...updatedArticle };
+      const adminIndex = adminArticles.value.findIndex(a => a.id === id);
+      if (adminIndex !== -1) {
+        adminArticles.value[adminIndex] = { ...updatedArticle };
+      }
+
+      // Keep blog list free of unpublished articles
+      if (updatedArticle.is_published) {
+        const blogIndex = articles.value.findIndex(a => a.id === id);
+        if (blogIndex === -1) {
+          // will appear after next blog refresh
+        } else {
+          articles.value[blogIndex] = { ...updatedArticle };
         }
+      } else {
+        articles.value = articles.value.filter(a => a.id !== id);
       }
 
-      // Обновляем текущие статьи
-      const articleIndex = articles.value.findIndex(article => article.id === id);
-      if (articleIndex !== -1) {
-        articles.value[articleIndex] = { ...updatedArticle };
-      }
-
-      // Обновляем текущую статью если она открыта
       if (article.value?.id === id) {
-        article.value = { ...updatedArticle };
+        article.value = updatedArticle.is_published ? { ...updatedArticle } : null;
       }
 
       return updatedArticle;
@@ -440,10 +494,10 @@ export const useArticlesStore = defineStore('articles', () => {
   };
 
   // ==================== GETTERS ====================
-  const getCurrentArticles = computed((): Article[] => {
-    const cacheKey = `${pagination.value.articlesPerPage}_${pagination.value.currentPage}`;
-    return pages.value[cacheKey]?.data?.data || articles.value;
-  });
+  const getCurrentArticles = computed((): Article[] =>
+    articles.value.filter((item) => item.is_published !== false),
+  );
+  const getAdminArticles = computed((): Article[] => adminArticles.value);
 
   const isLoading = computed(() => loading.value);
   const getError = computed(() => error.value);
@@ -456,6 +510,7 @@ export const useArticlesStore = defineStore('articles', () => {
   return {
     // State
     articles,
+    adminArticles,
     article,
     pages,
     cachedArticle,
@@ -463,14 +518,17 @@ export const useArticlesStore = defineStore('articles', () => {
     error,
     uploadProgress,
     pagination,
+    adminPagination,
     originPage,
     
     // Actions
     setOriginPage,
     clearAllCache,
+    invalidatePublicCache,
     loadArticles,
     loadAdminArticles,
     loadArticleById,
+    loadArticleByPath,
     clearPageCache,
     addArticle,
     editArticle,
@@ -479,6 +537,7 @@ export const useArticlesStore = defineStore('articles', () => {
     
     // Getters
     getCurrentArticles,
+    getAdminArticles,
     isLoading,
     getError,
     getArticleById,

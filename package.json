@@ -6,7 +6,14 @@
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
-    "preview": "nuxt preview"
+    "preview": "nuxt preview",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "seed:admin": "node scripts/seed-admin.mjs",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f app db",
+    "docker:restart": "docker compose up --build -d --force-recreate"
   },
   "dependencies": {
     "@pinia/nuxt": "^0.10.0",

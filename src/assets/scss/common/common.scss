@@ -1,27 +1,49 @@
 html {
-  //font-size: clamp(0.73rem, 2vw, 2rem) !important;
-
-  @media  #{$min-xl} {
+  @media #{$min-xl} {
     font-size: 2rem !important;
   }
 
-  @media  #{$xl} {
+  @media #{$xl} {
     font-size: 1.2rem !important;
   }
 
-  @media  #{$lg} {
+  @media #{$lg} {
     font-size: 0.73rem !important;
   }
+
+  &.hidden {
+    overflow: hidden;
+  }
 }
+
 body {
   min-width: 300px;
   letter-spacing: 2px;
+  margin: 0;
+  background-color: color(dark);
+  color: color(white);
 }
 
-main {
-  display: flex !important;
-  flex-direction: column;
-  align-items: center;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .hr-pixel {
@@ -32,9 +54,92 @@ main {
   margin: 8px 0;
 }
 
-.admin-panel {
-  background-color: red !important;
-  &:hover {
-    background-color: red !important;
+.text-error {
+  color: color(danger);
+}
+
+.text-success {
+  color: color(success);
+}
+
+.text-warning {
+  color: color(warning);
+}
+
+.text-muted {
+  color: color(dark-gray);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-capitalize {
+  text-transform: capitalize;
+}
+
+.text-no-wrap {
+  white-space: nowrap;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: bold;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color(gray);
+  border-radius: 4px;
+  font: inherit;
+  background: color(white);
+  color: color(dark);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.checkbox {
+  width: auto;
+}
+
+.modal {
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  max-width: 640px;
+  width: calc(100% - 2rem);
+  background: color(white);
+  color: color(dark);
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  &__content {
+    padding: 1.25rem;
+  }
+
+  &__header {
+    margin-bottom: 1rem;
+  }
+
+  &__body {
+    margin-bottom: 1rem;
+  }
+
+  &__footer {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
   }
 }

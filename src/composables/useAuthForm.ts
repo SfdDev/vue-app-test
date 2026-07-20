@@ -108,18 +108,13 @@ export function useAuthForm() {
   }
 
   async function submit() {
-    console.log('Submit function called');
-    console.log('Form data:', { username: username.value, password: password.value, isLogin: isLogin.value });
-    
     try {
       error.value = null;
       success.value = null;
       coincidence.value = null;
 
       if (isLogin.value) {
-        console.log('Attempting login...');
         await authStore.login(username.value, password.value);
-        console.log('Login successful!');
         success.value = 'Вход выполнен успешно!';
         setTimeout(() => {
           router.push('/');
@@ -183,17 +178,11 @@ export function useAuthForm() {
   });
 
   onMounted(async () => {
-    // Проверяем, авторизован ли пользователь
-    if (process.client) {
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
-      if (token && user) {
-        router.push('/');
-        return;
-      }
+    if (import.meta.client && authStore.isAuthenticated) {
+      router.push('/');
+      return;
     }
 
-    // Загружаем reCAPTCHA
     try {
       await loadRecaptcha();
       if (!isLogin.value) {

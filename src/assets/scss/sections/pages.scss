@@ -1,0 +1,47 @@
+@mixin page-bg($image) {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url($image);
+  background-position: center;
+  background-size: cover;
+}
+
+main {
+  &.home-page {
+    @include page-bg('/images/ade79216f15004b7d578cbfc3e93c330.jpg');
+  }
+
+  &.about-page {
+    @include page-bg('/images/about.webp');
+  }
+
+  &.learn-page {
+    background-image: url('/images/learn.webp');
+    background-position: center;
+    background-size: cover;
+  }
+
+  &.blog-page {
+    @include page-bg('/images/2wq.webp');
+    background-attachment: fixed;
+  }
+
+  &.article-page {
+    @include page-bg('/images/X9PvihJXUDNmsaJpAPJD--0--6soyy.webp');
+    padding: 2rem 0;
+  }
+
+  &.auth-page {
+    @include page-bg('/images/idP5t3FQc5ntEzcbl6yg--0--ya9qu.webp');
+    padding: 2rem 0;
+  }
+
+  &.admin-page {
+    @include page-bg('/images/admin.jpg');
+    padding: 2rem 0;
+  }
+
+  &.parallax-page {
+    background-image: url('/images/todo.webp');
+    background-position: center;
+    background-size: cover;
+  }
+}

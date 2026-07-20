@@ -2,10 +2,10 @@ $icons-ff: $icons-font-family;
 
 @font-face {
   font-family: 'icomoon';
-  src:  url('@/assets/icons/icomoon.eot?q4arts');
-  src:  url('@/assets/icons/icomoon.eot?q4arts#iefix') format('embedded-opentype'),
-  url('@/assets/icons/icomoon.ttf?q4arts') format('truetype'),
-  url('@/assets/icons/icomoon.woff?q4arts') format('woff');
+  src: url('../../icons/icomoon.eot?q4arts');
+  src: url('../../icons/icomoon.eot?q4arts#iefix') format('embedded-opentype'),
+    url('../../icons/icomoon.ttf?q4arts') format('truetype'),
+    url('../../icons/icomoon.woff?q4arts') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: block;

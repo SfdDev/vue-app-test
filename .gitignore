@@ -28,14 +28,6 @@ debug.log
 *.sublime-workspace
 *.sublime-project
 
-# Docker
-**/Dockerfile
-**/docker-compose.yml
-**/docker-compose.prod.yml
-**/docker-compose.override.yml
-**/*.env
-**/docker/
-
 # OS
 .DS_Store
 Thumbs.db

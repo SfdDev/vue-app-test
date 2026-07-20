@@ -7,20 +7,20 @@ const { isAuthenticated, currentUsername } = useAuth();
 </script>
 
 <template>
-  <footer class="footer text-center d-flex flex-column ga-2 py-4">
+  <footer class="footer">
     <div class="container">
       <div class="row">
-        <nav class="flex-wrap ga-4">
+        <nav class="footer__nav">
           <NuxtLink
             v-for="link in navLinks"
             :key="link.text"
-            class="py-2 btn btn--pixel"
+            class="btn btn--pixel"
             :to="link.href"
           >
             {{ link.text }}
           </NuxtLink>
         </nav>
-        <hr class="hr-pixel d-sm-none">
+        <hr class="hr-pixel footer__divider-mobile">
         <div class="social-icons social-icons--pixel">
           <a
             v-for="(icon, index) in socialIcons"
@@ -41,7 +41,7 @@ const { isAuthenticated, currentUsername } = useAuth();
           Vestibulum eu ipsum vel diam elementum tempor vel ut orci. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
         </div>
         <hr class="hr-pixel">
-        <div class="footer__info text-center w-100 rounded-lg">
+        <div class="footer__info">
           Все права защищены {{ new Date().getFullYear() }}г.
           <span
             v-if="isAuthenticated"
@@ -50,14 +50,10 @@ const { isAuthenticated, currentUsername } = useAuth();
             /{{ currentUsername }}
           </span>
           <NuxtLink class="logo" to="/">
-            <img src="#" alt="logo for footer">
+            <img src="@/assets/logo.svg" alt="logo for footer">
           </NuxtLink>
         </div>
       </div>
     </div>
   </footer>
 </template>
-
-<style lang="scss">
-
-</style>

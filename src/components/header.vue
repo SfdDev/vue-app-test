@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute, useRouter } from '#imports';
-import { useArticlesStore } from '@/store/articles';
 import { useAuthStore } from '@/store/auth';
 import { useAuth, useBaseLinks, useSocialIcons } from '@/utils/common';
 
 const { isAuthenticated, currentUsername } = useAuth();
 const { socialIcons } = useSocialIcons();
-const store = useArticlesStore();
 const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 const isMenuOpen = ref(false);
 const { navLinks } = useBaseLinks();
-const articles = computed(() => store.articles);
+
+/** Keep first client render identical to SSR, then reveal auth UI */
+const isClientReady = ref(false);
+
+onMounted(() => {
+  isClientReady.value = true;
+});
+
+const showLoggedIn = computed(
+  () => isClientReady.value && authStore.ready && isAuthenticated.value,
+);
 
 const logoutHandler = () => {
   authStore.logout();
@@ -47,62 +55,29 @@ const toggleMenu = () => {
 
 const allNavLinks = computed(() => {
   const links = [...navLinks.value];
-  
-  // Добавляем отладочные логи
-  console.log('Computing nav links, auth state:', {
-    isClient: process.client,
-    isAuthenticated: authStore.isAuthenticated,
-    isAdmin: authStore.isAdmin
-  });
-  
-  // Проверяем только на клиенте, чтобы избежать проблем с SSR
-  if (process.client && authStore.isAuthenticated && authStore.isAdmin) {
-    console.log('Adding admin link');
+
+  if (showLoggedIn.value && authStore.isAdmin) {
     links.push({ text: 'Админ-панель', href: '/admin' });
   }
-  
-  console.log('Final links:', links.map(l => l.text));
+
   return links;
 });
-
-// Обновляем навигацию после загрузки на клиенте
-onMounted(() => {
-  console.log('Header mounted, auth state:', {
-    isAuthenticated: authStore.isAuthenticated,
-    isAdmin: authStore.isAdmin,
-    user: authStore.user
-  });
-});
-
-// Следим за изменениями авторизации
-watch(
-  () => ({
-    isAuthenticated: authStore.isAuthenticated,
-    isAdmin: authStore.isAdmin
-  }),
-  (newState) => {
-    console.log('Auth state changed:', newState);
-    // Принудительно обновляем computed, вызывая его
-    void allNavLinks.value;
-  },
-  { immediate: true }
-);
 </script>
 
 <template>
   <header :class="['header', { 'bg--dark-gray': isMenuOpen }]">
     <div class="container">
-      <div class="row align-center">
+      <div class="header__row">
         <NuxtLink class="logo" to="/">
-          <img src="#" alt="logo for header">
+          <img src="@/assets/logo.svg" alt="logo for header">
         </NuxtLink>
 
-        <div v-if="isAuthenticated" class="name-user text-capitalize">
+        <div v-if="showLoggedIn" class="name-user text-capitalize">
           /{{ currentUsername }}
         </div>
 
         <button
-          class="toggle d-lg-none"
+          class="toggle"
           :class="{ 'toggle--open': isMenuOpen }"
           type="button"
           @click="toggleMenu"
@@ -121,7 +96,7 @@ watch(
           </svg>
         </button>
 
-        <div class="social-icons social-icons--pixel ma-auto d-none d-lg-flex">
+        <div class="social-icons social-icons--pixel header__social">
           <a
             v-for="(icon, index) in socialIcons"
             :key="index"
@@ -132,28 +107,28 @@ watch(
           />
         </div>
 
-        <nav class="d-none d-lg-flex">
+        <nav class="header__nav">
           <NuxtLink
             v-for="link in allNavLinks"
             :key="link.text"
-            class="py-2 btn btn--pixel"
+            class="btn btn--pixel"
             :to="link.href"
           >
             {{ link.text }}
           </NuxtLink>
         </nav>
 
-        <div class="d-none d-lg-flex ml-4">
+        <div class="header__auth">
           <NuxtLink
-            v-if="!isAuthenticated"
+            v-if="!showLoggedIn"
             to="/auth"
-            class="py-2 btn-login btn btn--pixel"
+            class="btn-login btn btn--pixel"
           >
             Вход/Регистрация
           </NuxtLink>
           <button
             v-else
-            class="py-2 btn-logout btn btn--pixel"
+            class="btn-logout btn btn--pixel"
             type="button"
             @click="logoutHandler"
           >
@@ -164,7 +139,7 @@ watch(
     </div>
 
     <transition name="fade">
-      <aside v-if="isMenuOpen" class="nav d-lg-none">
+      <aside v-if="isMenuOpen" class="nav">
         <ul class="nav__list">
           <li
             v-for="link in allNavLinks"
@@ -180,7 +155,7 @@ watch(
           </li>
 
           <li
-            v-if="!isAuthenticated"
+            v-if="!showLoggedIn"
             class="btn-login btn btn--pixel"
           >
             <NuxtLink to="/auth" @click="isMenuOpen = false">
@@ -211,7 +186,3 @@ watch(
     </transition>
   </header>
 </template>
-
-<style lang="scss">
-
-</style>

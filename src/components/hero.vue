@@ -20,25 +20,24 @@ const isHomePage = computed(() => route.name === 'home');
 </script>
 
 <template>
-  <div class="hero">
+  <section class="hero">
     <div class="container">
-        <div class="hero__content">
-          <h1 class="hero__headline">{{ heroText || 'Страница' }}</h1>
-          <p class="hero__desc">
-            {{ description || 'Описание страницы' }}
-          </p>
-          <div v-if="isAuthenticated" class="name-user name-user--xl text-no-wrap hover--yellow">{{ currentUsername }}</div>
-          <NuxtLink
-              v-if="isHomePage"
-              to="/about"
-              class="btn btn--default"
-          >
-            <span>Узнать больше о нас</span></NuxtLink>
+      <div class="hero__content">
+        <h1 class="hero__headline">{{ heroText || 'Страница' }}</h1>
+        <p class="hero__desc">
+          {{ description || 'Описание страницы' }}
+        </p>
+        <div v-if="isAuthenticated" class="name-user name-user--xl text-no-wrap hover--yellow">
+          {{ currentUsername }}
         </div>
+        <NuxtLink
+          v-if="isHomePage"
+          to="/about"
+          class="btn btn--default"
+        >
+          <span>Узнать больше о нас</span>
+        </NuxtLink>
+      </div>
     </div>
-  </div>
+  </section>
 </template>
-
-<style lang="scss">
-
-</style>

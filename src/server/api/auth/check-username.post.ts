@@ -1,15 +1,13 @@
-import { usernameExists } from '../../services/auth.service';
+import { authService } from '../../composition/container';
+import { mapDomainError } from '../../shared/http/map-error';
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ username: string }>(event);
 
   try {
-    const exists = await usernameExists(body.username);
+    const exists = await authService.checkUsername(body.username);
     return { exists };
-  } catch (error: any) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: error.message ?? 'Ошибка проверки имени пользователя',
-    });
+  } catch (error) {
+    mapDomainError(error);
   }
 });

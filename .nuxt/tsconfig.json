@@ -95,10 +95,10 @@
         "../src/assets/*"
       ],
       "public": [
-        "../src/public"
+        "../public"
       ],
       "public/*": [
-        "../src/public/*"
+        "../public/*"
       ],
       "#server": [
         "../src/server"
@@ -125,7 +125,7 @@
         "./imports"
       ],
       "#app-manifest": [
-        "./manifest/meta/dev"
+        "./manifest/meta/b4c95a43-bbc7-430d-b097-82fd117b5212.json"
       ],
       "#components": [
         "./components"
@@ -185,6 +185,6 @@
     "../node_modules/@nuxt/telemetry/node_modules",
     "../node_modules/runtime/server",
     "../node_modules/dist/runtime/server",
-    "dev"
+    "../.output"
   ]
 }

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import type { Category } from '~/server/models/category.model';
+import type { Category } from '~/server/domain/category';
+import { useAuthStore } from '@/store/auth';
 
 interface CategoryState {
   categories: Category[];
@@ -49,7 +50,7 @@ export const useCategoryStore = defineStore('category', {
         const response = await $fetch('/api/categories') as { data: Category[] };
         this.categories = response.data;
       } catch (error: any) {
-        this.error = error.message || 'Ошибка при загрузке категорий';
+        this.error = error.data?.statusMessage || error.message || 'Ошибка при загрузке категорий';
         throw error;
       } finally {
         this.loading = false;
@@ -59,17 +60,19 @@ export const useCategoryStore = defineStore('category', {
     async createCategory(categoryData: { name: string; slug?: string; description?: string }) {
       this.loading = true;
       this.error = null;
+      const authStore = useAuthStore();
       
       try {
         const response = await $fetch('/api/categories', {
           method: 'POST',
-          body: categoryData
+          body: categoryData,
+          headers: authStore.getAuthHeader(),
         }) as { data: Category };
         
         this.categories.push(response.data);
         return response.data;
       } catch (error: any) {
-        this.error = error.message || 'Ошибка при создании категории';
+        this.error = error.data?.statusMessage || error.message || 'Ошибка при создании категории';
         throw error;
       } finally {
         this.loading = false;
@@ -79,11 +82,13 @@ export const useCategoryStore = defineStore('category', {
     async updateCategory(id: number, categoryData: { name?: string; slug?: string; description?: string }) {
       this.loading = true;
       this.error = null;
+      const authStore = useAuthStore();
       
       try {
         const response = await $fetch(`/api/categories/${id}`, {
           method: 'PUT',
-          body: categoryData
+          body: categoryData,
+          headers: authStore.getAuthHeader(),
         }) as { data: Category };
         
         const index = this.categories.findIndex(cat => cat.id === id);
@@ -93,7 +98,7 @@ export const useCategoryStore = defineStore('category', {
         
         return response.data;
       } catch (error: any) {
-        this.error = error.message || 'Ошибка при обновлении категории';
+        this.error = error.data?.statusMessage || error.message || 'Ошибка при обновлении категории';
         throw error;
       } finally {
         this.loading = false;
@@ -103,10 +108,12 @@ export const useCategoryStore = defineStore('category', {
     async deleteCategory(id: number) {
       this.loading = true;
       this.error = null;
+      const authStore = useAuthStore();
       
       try {
         const response = await $fetch(`/api/categories/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: authStore.getAuthHeader(),
         }) as { data: Category };
         
         const index = this.categories.findIndex(cat => cat.id === id);
@@ -116,7 +123,7 @@ export const useCategoryStore = defineStore('category', {
         
         return response.data;
       } catch (error: any) {
-        this.error = error.message || 'Ошибка при удалении категории';
+        this.error = error.data?.statusMessage || error.message || 'Ошибка при удалении категории';
         throw error;
       } finally {
         this.loading = false;

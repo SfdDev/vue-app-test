@@ -5,87 +5,86 @@ import CategoryFilter from '@/components/CategoryFilter.vue';
 import { formatDate, getFullImageUrl } from '@/utils/common';
 import { useBlog } from '@/composables/useBlog';
 import { ref, watch } from 'vue';
+import { articlePublicPath } from '@/shared/slugify';
 
-const { articles, pagination, loadArticles } = useBlog(6, '/blog');
+const { articles, pagination, loadArticles, changePage } = useBlog(6, '/blog');
 const selectedCategory = ref<number | null>(null);
 
-// Следим за изменением категории и перезагружаем статьи
 watch(selectedCategory, async (newCategory) => {
+  // Reset to page 1 for the selected filter (do not keep ?page from previous filter)
   await loadArticles(1, newCategory);
 });
 
 function onCategoryChanged(categoryId: number | null) {
   selectedCategory.value = categoryId;
 }
+
+function articleLink(article: { id: number; slug?: string | null; category_id?: number | null; category_slug?: string | null }) {
+  return articlePublicPath(article);
+}
 </script>
 
 <template>
   <Hero />
-  <CategoryFilter @categoryChanged="onCategoryChanged" />
-  <div class="blog__content">
-    <div class="container">
-      <div class="row">
-        <div
-          v-for="article in articles"
-          :key="article.id"
-          class="col-12 col-sm-6 col-lg-4"
-        >
-          <article class="card" @click="$router.push(`/blog/${article.id}`)">
-            <img
-              class="card__image"
-              :src="getFullImageUrl(article.image_url)"
-              alt=""
-              loading="lazy"
-            >
-            <div class="pa-5">
-              <h3 class="card__headline">
-                {{ article.title }}
-              </h3>
-              <hr class="hr-pixel">
-              <div class="card__created">
-                Опубликовано: {{ formatDate(article.created_at) }}
+  <section class="blog">
+    <CategoryFilter @categoryChanged="onCategoryChanged" />
+    <div class="blog__content">
+      <div class="container">
+        <div class="row">
+          <div
+            v-for="article in articles"
+            :key="article.id"
+            class="col-12 col-sm-6 col-lg-4"
+          >
+            <article class="card" @click="$router.push(articleLink(article))">
+              <img
+                class="card__image"
+                :src="getFullImageUrl(article.image_url)"
+                alt=""
+                loading="lazy"
+              >
+              <div class="card__body">
+                <h3 class="card__headline">
+                  {{ article.title }}
+                </h3>
+                <hr class="hr-pixel">
+                <div class="card__created">
+                  Опубликовано: {{ formatDate(article.created_at) }}
+                </div>
+                <hr class="hr-pixel">
+                <div class="card__author">
+                  Автор: {{ article.author_name }}
+                </div>
+                <hr class="hr-pixel">
+                <div class="card__category">
+                  Категория: {{ article.category_name || 'Без категории' }}
+                </div>
+                <hr class="hr-pixel">
+                <p class="card__description">
+                  {{ article.content }}...
+                </p>
+                <hr class="hr-pixel">
+                <div class="card__footer">
+                  <button
+                    class="btn"
+                    type="button"
+                    @click.stop="$router.push(articleLink(article))"
+                  >
+                    Читать дальше
+                  </button>
+                </div>
               </div>
-              <hr class="hr-pixel">
-              <div class="card__author">
-                Автор: {{ article.author_name }}
-              </div>
-              <hr class="hr-pixel" v-if="article.category_name">
-              <div class="card__category" v-if="article.category_name">
-                Категория: {{ article.category_name }}
-              </div>
-              <hr class="hr-pixel" v-if="article.category_name">
-              <p class="card__description">
-                {{ article.content }}...
-              </p>
-              <hr class="hr-pixel">
-              <div class="card__footer mt-5">
-                <button
-                  class="btn"
-                  type="button"
-                  @click.stop="$router.push(`/blog/${article.id}`)"
-                >
-                  Читать дальше
-                </button>
-              </div>
-            </div>
-          </article>
+            </article>
+          </div>
         </div>
+
+        <Pagination
+          :total-pages="pagination.totalPages"
+          :model-value="pagination.currentPage"
+          :sync-route="false"
+          @update:model-value="changePage"
+        />
       </div>
-
-      <Pagination
-        :total-pages="pagination.totalPages"
-        :model-value="pagination.currentPage"
-        @update:model-value="(page) => pagination.currentPage = page"
-      />
     </div>
-  </div>
+  </section>
 </template>
-
-<style scoped lang="scss">
-.blog {
-  background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('/image/2wq.webp');
-  background-position: center;
-  background-size: cover;
-}
-</style>
-

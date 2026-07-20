@@ -99,10 +99,10 @@
         "../src/assets/*"
       ],
       "public": [
-        "../src/public"
+        "../public"
       ],
       "public/*": [
-        "../src/public/*"
+        "../public/*"
       ],
       "#server": [
         "../src/server"

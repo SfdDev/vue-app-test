@@ -19,7 +19,7 @@ $desc__color: color(white);
 
   &__headline {
     color: $headline__color;
-    font-size: clamp(2rem, 5vw, 7rem); // Минимум 2rem, идеально 5vw, максимум 4rem
+    font-size: clamp(2rem, 5vw, 7rem);
     line-height: 1.3;
     font-weight: bold;
     text-transform: uppercase;
@@ -30,7 +30,7 @@ $desc__color: color(white);
   &__desc {
     color: $desc__color;
     opacity: 0.9;
-    font-size: clamp(1rem, 2vw, 2rem); // Минимум 2rem, идеально 5vw, максимум 4rem
+    font-size: clamp(1rem, 2vw, 2rem);
     font-weight: bold;
     margin-bottom: 40px;
     text-transform: uppercase;
@@ -43,4 +43,14 @@ $desc__color: color(white);
   .btn {
     padding: 15px 25px;
   }
+}
+
+main.home-page .hero,
+main.about-page .hero,
+main.learn-page .hero,
+main.parallax-page .hero {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
